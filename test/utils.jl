@@ -1,30 +1,30 @@
 @testset "utils.jl" begin
 
-import HTTP.Parsers
-import HTTP.URIs
+import HTTPA.Parsers
+import HTTPA.URIs
 
-@test HTTP.Strings.escapehtml("&\"'<>") == "&amp;&quot;&#39;&lt;&gt;"
+@test HTTPA.Strings.escapehtml("&\"'<>") == "&amp;&quot;&#39;&lt;&gt;"
 
-@test HTTP.Cookies.isurlchar('\u81')
-@test !HTTP.Cookies.isurlchar('\0')
+@test HTTPA.Cookies.isurlchar('\u81')
+@test !HTTPA.Cookies.isurlchar('\0')
 
-@test HTTP.Strings.tocameldash("accept") == "Accept"
-@test HTTP.Strings.tocameldash("Accept") == "Accept"
-@test HTTP.Strings.tocameldash("eXcept-this") == "Except-This"
-@test HTTP.Strings.tocameldash("exCept-This") == "Except-This"
-@test HTTP.Strings.tocameldash("not-valid") == "Not-Valid"
-@test HTTP.Strings.tocameldash("♇") == "♇"
-@test HTTP.Strings.tocameldash("bλ-a") == "Bλ-A"
-@test HTTP.Strings.tocameldash("not fixable") == "Not fixable"
-@test HTTP.Strings.tocameldash("aaaaaaaaaaaaa") == "Aaaaaaaaaaaaa"
-@test HTTP.Strings.tocameldash("conTENT-Length") == "Content-Length"
-@test HTTP.Strings.tocameldash("Sec-WebSocket-Key2") == "Sec-Websocket-Key2"
-@test HTTP.Strings.tocameldash("User-agent") == "User-Agent"
-@test HTTP.Strings.tocameldash("Proxy-authorization") == "Proxy-Authorization"
-@test HTTP.Strings.tocameldash("HOST") == "Host"
-@test HTTP.Strings.tocameldash("ST") == "St"
-@test HTTP.Strings.tocameldash("X-\$PrototypeBI-Version") == "X-\$prototypebi-Version"
-@test HTTP.Strings.tocameldash("DCLK_imp") == "Dclk_imp"
+@test HTTPA.Strings.tocameldash("accept") == "Accept"
+@test HTTPA.Strings.tocameldash("Accept") == "Accept"
+@test HTTPA.Strings.tocameldash("eXcept-this") == "Except-This"
+@test HTTPA.Strings.tocameldash("exCept-This") == "Except-This"
+@test HTTPA.Strings.tocameldash("not-valid") == "Not-Valid"
+@test HTTPA.Strings.tocameldash("♇") == "♇"
+@test HTTPA.Strings.tocameldash("bλ-a") == "Bλ-A"
+@test HTTPA.Strings.tocameldash("not fixable") == "Not fixable"
+@test HTTPA.Strings.tocameldash("aaaaaaaaaaaaa") == "Aaaaaaaaaaaaa"
+@test HTTPA.Strings.tocameldash("conTENT-Length") == "Content-Length"
+@test HTTPA.Strings.tocameldash("Sec-WebSocket-Key2") == "Sec-Websocket-Key2"
+@test HTTPA.Strings.tocameldash("User-agent") == "User-Agent"
+@test HTTPA.Strings.tocameldash("Proxy-authorization") == "Proxy-Authorization"
+@test HTTPA.Strings.tocameldash("HOST") == "Host"
+@test HTTPA.Strings.tocameldash("ST") == "St"
+@test HTTPA.Strings.tocameldash("X-\$PrototypeBI-Version") == "X-\$prototypebi-Version"
+@test HTTPA.Strings.tocameldash("DCLK_imp") == "Dclk_imp"
 
 
 for (bytes, utf8) in (
@@ -36,7 +36,7 @@ for (bytes, utf8) in (
         # (UInt8[0x6e, 0x6f, 0xeb, 0x6c, 0x20, 0xa4], "noël €"),
         (UInt8[0xc4, 0xc6, 0xe4], "ÄÆä"),
     )
-    @test HTTP.Strings.iso8859_1_to_utf8(bytes) == utf8
+    @test HTTPA.Strings.iso8859_1_to_utf8(bytes) == utf8
 end
 
 # using StringEncodings

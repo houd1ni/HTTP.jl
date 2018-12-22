@@ -9,14 +9,14 @@ using MbedTLS: SSLContext
 import ..@debug, ..DEBUG_LEVEL
 
 """
-    request(ConnectionPoolLayer, ::URI, ::Request, body) -> HTTP.Response
+    request(ConnectionPoolLayer, ::URI, ::Request, body) -> HTTPA.Response
 
 Retrieve an `IO` connection from the [`ConnectionPool`](@ref).
 
 Close the connection if the request throws an exception.
 Otherwise leave it open so that it can be reused.
 
-`IO` related exceptions from `Base` are wrapped in `HTTP.IOError`.
+`IO` related exceptions from `Base` are wrapped in `HTTPA.IOError`.
 See [`isioerror`](@ref).
 """
 abstract type ConnectionPoolLayer{Next <: Layer} <: Layer end

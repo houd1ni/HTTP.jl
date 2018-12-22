@@ -70,7 +70,7 @@ combinations = Iterators.Stateful(Iterators.cycle(shuffle(combinations)))
 
 timestamp() = string(round(Int, time() * 1000))
 
-HTTP.listen("127.0.0.1", 8080) do http::HTTP.Stream
+HTTPA.listen("127.0.0.1", 8080) do http::HTTPA.Stream
 
     p1n, produce1f,
     p2n, produce2f,
@@ -80,8 +80,8 @@ HTTP.listen("127.0.0.1", 8080) do http::HTTP.Stream
     name = "$p1n, $p2n, $in and $cn")
     println(name)
 
-    HTTP.setheader(http, "x-test-cobination" => name)
-    HTTP.setheader(http, "x-test-tzero" => timestamp())
+    HTTPA.setheader(http, "x-test-cobination" => name)
+    HTTPA.setheader(http, "x-test-tzero" => timestamp())
 
     produce1f(http)
     produce2f(http)

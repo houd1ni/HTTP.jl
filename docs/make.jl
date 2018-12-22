@@ -1,8 +1,8 @@
-using Documenter, HTTP
+using Documenter, HTTPA
 
 makedocs(
-    modules = [HTTP],
-    sitename = "HTTP.jl",
+    modules = [HTTPA],
+    sitename = "HTTPA.jl",
     pages = [
              "Home" => "index.md",
              "public_interface.md",
@@ -12,5 +12,5 @@ makedocs(
 )
 
 deploydocs(
-    repo = "github.com/JuliaWeb/HTTP.jl.git",
+    repo = "github.com/JuliaWeb/HTTPA.jl.git",
 )

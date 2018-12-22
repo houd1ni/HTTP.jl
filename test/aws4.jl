@@ -1,8 +1,8 @@
 using Dates
 using Test
-using HTTP
-using HTTP: Headers, URI
-using HTTP.AWS4AuthRequest: sign_aws4!
+using HTTPA
+using HTTPA: Headers, URI
+using HTTPA.AWS4AuthRequest: sign_aws4!
 
 # Based on https://docs.aws.amazon.com/general/latest/gr/signature-v4-test-suite.html
 # and https://docs.aws.amazon.com/AmazonS3/latest/API/sig-v4-header-based-auth.html

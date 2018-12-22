@@ -1,7 +1,7 @@
 
-# HTTP
+# HTTPA
 
-*HTTP client and server functionality for Julia*
+*HTTPA client and server functionality for Julia*
 
 | **Documentation**                                                               | **PackageEvaluator**                                            | **Build Status**                                                                                |
 |:-------------------------------------------------------------------------------:|:---------------------------------------------------------------:|:-----------------------------------------------------------------------------------------------:|
@@ -12,7 +12,7 @@
 
 The package is registered in `METADATA.jl` and so can be installed with `Pkg.add`.
 ```julia
-julia> Pkg.add("HTTP")
+julia> Pkg.add("HTTPA")
 ```
 
 <!-- ## Documentation
@@ -35,21 +35,21 @@ Contributions are very welcome, as are feature requests and suggestions. Please 
 
 ## Client Examples
 
-[`HTTP.request`](https://juliaweb.github.io/HTTP.jl/stable/index.html#HTTP.request-Tuple{String,HTTP.URIs.URI,Array{Pair{SubString{String},SubString{String}},1},Any})
-sends a HTTP Request Message and returns a Response Message.
+[`HTTPA.request`](https://juliaweb.github.io/HTTPA.jl/stable/index.html#HTTPA.request-Tuple{String,HTTPA.URIs.URI,Array{Pair{SubString{String},SubString{String}},1},Any})
+sends a HTTPA Request Message and returns a Response Message.
 
 ```julia
-r = HTTP.request("GET", "http://httpbin.org/ip"; verbose=3)
+r = HTTPA.request("GET", "http://httpbin.org/ip"; verbose=3)
 println(r.status)
 println(String(r.body))
 ```
 
-[`HTTP.open`](https://juliaweb.github.io/HTTP.jl/stable/index.html#HTTP.open)
-sends a HTTP Request Message and
+[`HTTPA.open`](https://juliaweb.github.io/HTTPA.jl/stable/index.html#HTTPA.open)
+sends a HTTPA Request Message and
 opens an `IO` stream from which the Response can be read.
 
 ```julia
-HTTP.open("GET", "https://tinyurl.com/bach-cello-suite-1-ogg") do http
+HTTPA.open("GET", "https://tinyurl.com/bach-cello-suite-1-ogg") do http
     open(`vlc -q --play-and-exit --intf dummy -`, "w") do vlc
         write(vlc, http)
     end
@@ -58,12 +58,12 @@ end
 
 ## Server Examples
 
-[`HTTP.Servers.listen`](https://juliaweb.github.io/HTTP.jl/stable/index.html#HTTP.Servers.listen):
+[`HTTPA.Servers.listen`](https://juliaweb.github.io/HTTPA.jl/stable/index.html#HTTPA.Servers.listen):
 
 ```julia
-HTTP.listen() do http::HTTP.Stream
+HTTPA.listen() do http::HTTPA.Stream
     @show http.message
-    @show HTTP.header(http, "Content-Type")
+    @show HTTPA.header(http, "Content-Type")
     while !eof(http)
         println("body data: ", String(readavailable(http)))
     end
@@ -75,17 +75,17 @@ HTTP.listen() do http::HTTP.Stream
 end
 ```
 
-[`HTTP.Handlers.serve`](https://juliaweb.github.io/HTTP.jl/stable/index.html#HTTP.Handlers.serve):
+[`HTTPA.Handlers.serve`](https://juliaweb.github.io/HTTPA.jl/stable/index.html#HTTPA.Handlers.serve):
 ```julia
-HTTP.serve() do request::HTTP.Request
+HTTPA.serve() do request::HTTPA.Request
    @show request
    @show request.method
-   @show HTTP.header(request, "Content-Type")
-   @show HTTP.payload(request)
+   @show HTTPA.header(request, "Content-Type")
+   @show HTTPA.payload(request)
    try
-       return HTTP.Response("Hello")
+       return HTTPA.Response("Hello")
    catch e
-       return HTTP.Response(404, "Error: $e")
+       return HTTPA.Response(404, "Error: $e")
    end
 end
 ```
@@ -93,14 +93,14 @@ end
 ## WebSocket Examples
 
 ```julia
-julia> @async HTTP.WebSockets.listen("127.0.0.1", UInt16(8081)) do ws
+julia> @async HTTPA.WebSockets.listen("127.0.0.1", UInt16(8081)) do ws
            while !eof(ws)
                data = readavailable(ws)
                write(ws, data)
            end
        end
 
-julia> HTTP.WebSockets.open("ws://127.0.0.1:8081") do ws
+julia> HTTPA.WebSockets.open("ws://127.0.0.1:8081") do ws
            write(ws, "Hello")
            x = readavailable(ws)
            @show x
@@ -111,21 +111,21 @@ Hello
 ```
 
 [docs-dev-img]: https://img.shields.io/badge/docs-dev-blue.svg
-[docs-dev-url]: https://JuliaWeb.github.io/HTTP.jl/dev
+[docs-dev-url]: https://JuliaWeb.github.io/HTTPA.jl/dev
 
 [docs-stable-img]: https://img.shields.io/badge/docs-stable-blue.svg
-[docs-stable-url]: https://JuliaWeb.github.io/HTTP.jl/stable
+[docs-stable-url]: https://JuliaWeb.github.io/HTTPA.jl/stable
 
-[travis-img]: https://travis-ci.org/JuliaWeb/HTTP.jl.svg?branch=master
-[travis-url]: https://travis-ci.org/JuliaWeb/HTTP.jl
+[travis-img]: https://travis-ci.org/JuliaWeb/HTTPA.jl.svg?branch=master
+[travis-url]: https://travis-ci.org/JuliaWeb/HTTPA.jl
 
 [appveyor-img]: https://ci.appveyor.com/api/projects/status/qdy0vfps9gne3sd7?svg=true
 [appveyor-url]: https://ci.appveyor.com/project/quinnj/http-jl
 
-[codecov-img]: https://codecov.io/gh/JuliaWeb/HTTP.jl/branch/master/graph/badge.svg
-[codecov-url]: https://codecov.io/gh/JuliaWeb/HTTP.jl
+[codecov-img]: https://codecov.io/gh/JuliaWeb/HTTPA.jl/branch/master/graph/badge.svg
+[codecov-url]: https://codecov.io/gh/JuliaWeb/HTTPA.jl
 
-[issues-url]: https://github.com/JuliaWeb/HTTP.jl/issues
+[issues-url]: https://github.com/JuliaWeb/HTTPA.jl/issues
 
 [pkg-0.6-img]: http://pkg.julialang.org/badges/HTTP_0.6.svg
-[pkg-0.6-url]: http://pkg.julialang.org/?pkg=HTTP
+[pkg-0.6-url]: http://pkg.julialang.org/?pkg=HTTPA

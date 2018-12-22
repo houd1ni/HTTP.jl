@@ -1,6 +1,6 @@
 using Unitful
 
-using HTTP
+using HTTPA
 
 include("urlparser.jl")
 
@@ -28,7 +28,7 @@ function go(count::Int)
                                                                 t_start = time()
     @time for rep in 1:count
         for url in urls
-            uri = HTTP.URIs.parse_uri_reference(url)
+            uri = HTTPA.URIs.parse_uri_reference(url)
         end
     end
                                                                  t_done = time()

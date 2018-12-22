@@ -1,12 +1,12 @@
 using Test
-using HTTP
-using HTTP.URIs
+using HTTPA
+using HTTPA.URIs
 
 mutable struct URLTest
     name::String
     url::String
     isconnect::Bool
-    expecteduri::HTTP.URI
+    expecteduri::HTTPA.URI
     shouldthrow::Bool
 end
 
@@ -16,13 +16,13 @@ struct Offset
 end
 
 function parse_connect_target(target)
-    t = parse(HTTP.URI, "dummy://$target")
+    t = parse(HTTPA.URI, "dummy://$target")
     if !isempty(t.userinfo) ||
        !isempty(t.path) ||
         isempty(t.host) ||
         isempty(t.port)
 
-        throw(HTTP.URIs.ParseError(""))
+        throw(HTTPA.URIs.ParseError(""))
     end
     return t.host, t.port
 end
@@ -37,23 +37,23 @@ function offsetss(uri, offset)
 end
 
 function URLTest(nm::String, url::String, isconnect::Bool, shouldthrow::Bool)
-    URLTest(nm, url, isconnect, HTTP.URI(""), shouldthrow)
+    URLTest(nm, url, isconnect, HTTPA.URI(""), shouldthrow)
 end
 
 function URLTest(nm::String, url::String, isconnect::Bool, offsets::NTuple{7, Offset}, shouldthrow::Bool)
-    uri = HTTP.URI(url, (offsetss(url, o) for o in offsets)...)
+    uri = HTTPA.URI(url, (offsetss(url, o) for o in offsets)...)
     URLTest(nm, url, isconnect, uri, shouldthrow)
 end
 
-@testset "HTTP.URI" begin
+@testset "HTTPA.URI" begin
     # constructor
-    @test string(HTTP.URI("")) == ""
-    @test HTTP.URI(scheme="http", host="google.com") == HTTP.URI("http://google.com")
-    @test HTTP.URI(scheme="http", host="google.com", path="/") == HTTP.URI("http://google.com/")
-    @test HTTP.URI(scheme="http", host="google.com", userinfo="user") == HTTP.URI("http://user@google.com")
-    @test HTTP.URI(scheme="http", host="google.com", path="/user") == HTTP.URI("http://google.com/user")
-    @test HTTP.URI(scheme="http", host="google.com", query=Dict("key"=>"value")) == HTTP.URI("http://google.com?key=value")
-    @test HTTP.URI(scheme="http", host="google.com", path="/", fragment="user") == HTTP.URI("http://google.com/#user")
+    @test string(HTTPA.URI("")) == ""
+    @test HTTPA.URI(scheme="http", host="google.com") == HTTPA.URI("http://google.com")
+    @test HTTPA.URI(scheme="http", host="google.com", path="/") == HTTPA.URI("http://google.com/")
+    @test HTTPA.URI(scheme="http", host="google.com", userinfo="user") == HTTPA.URI("http://user@google.com")
+    @test HTTPA.URI(scheme="http", host="google.com", path="/user") == HTTPA.URI("http://google.com/user")
+    @test HTTPA.URI(scheme="http", host="google.com", query=Dict("key"=>"value")) == HTTPA.URI("http://google.com?key=value")
+    @test HTTPA.URI(scheme="http", host="google.com", path="/", fragment="user") == HTTPA.URI("http://google.com/#user")
 
     urls = [("hdfs://user:password@hdfshost:9000/root/folder/file.csv#frag", ["root", "folder", "file.csv"]),
             ("https://user:password@httphost:9000/path1/path2;paramstring?q=a&p=r#frag", ["path1", "path2;paramstring"]),
@@ -72,53 +72,53 @@ end
             ]
 
     for (url, splpath) in urls
-        u = parse(HTTP.URI, url)
+        u = parse(HTTPA.URI, url)
         @test string(u) == url
         @test isvalid(u)
-        @test HTTP.URIs.splitpath(u.path) == splpath
+        @test HTTPA.URIs.splitpath(u.path) == splpath
     end
 
-    @test parse(HTTP.URI, "hdfs://user:password@hdfshost:9000/root/folder/file.csv") == HTTP.URI(host="hdfshost", path="/root/folder/file.csv", scheme="hdfs", port=9000, userinfo="user:password")
-    @test parse(HTTP.URI, "http://google.com:80/some/path") == HTTP.URI(scheme="http", host="google.com", path="/some/path")
+    @test parse(HTTPA.URI, "hdfs://user:password@hdfshost:9000/root/folder/file.csv") == HTTPA.URI(host="hdfshost", path="/root/folder/file.csv", scheme="hdfs", port=9000, userinfo="user:password")
+    @test parse(HTTPA.URI, "http://google.com:80/some/path") == HTTPA.URI(scheme="http", host="google.com", path="/some/path")
 
-    @test HTTP.Strings.lower(UInt8('A')) == UInt8('a')
-    @test HTTP.escapeuri(Char(1)) == "%01"
+    @test HTTPA.Strings.lower(UInt8('A')) == UInt8('a')
+    @test HTTPA.escapeuri(Char(1)) == "%01"
 
-    @test HTTP.escapeuri(Dict("key1"=>"value1", "key2"=>["value2", "value3"])) == "key2=value2&key2=value3&key1=value1"
+    @test HTTPA.escapeuri(Dict("key1"=>"value1", "key2"=>["value2", "value3"])) == "key2=value2&key2=value3&key1=value1"
 
-    @test HTTP.escapeuri("abcdef αβ 1234-=~!@#\$()_+{}|[]a;") == "abcdef%20%CE%B1%CE%B2%201234-%3D%7E%21%40%23%24%28%29_%2B%7B%7D%7C%5B%5Da%3B"
-    @test HTTP.unescapeuri(HTTP.escapeuri("abcdef 1234-=~!@#\$()_+{}|[]a;")) == "abcdef 1234-=~!@#\$()_+{}|[]a;"
-    @test HTTP.unescapeuri(HTTP.escapeuri("👽")) == "👽"
+    @test HTTPA.escapeuri("abcdef αβ 1234-=~!@#\$()_+{}|[]a;") == "abcdef%20%CE%B1%CE%B2%201234-%3D%7E%21%40%23%24%28%29_%2B%7B%7D%7C%5B%5Da%3B"
+    @test HTTPA.unescapeuri(HTTPA.escapeuri("abcdef 1234-=~!@#\$()_+{}|[]a;")) == "abcdef 1234-=~!@#\$()_+{}|[]a;"
+    @test HTTPA.unescapeuri(HTTPA.escapeuri("👽")) == "👽"
 
-    @test HTTP.escapeuri([("foo", "bar"), (1, 2)]) == "foo=bar&1=2"
-    @test HTTP.escapeuri(Dict(["foo" => "bar", 1 => 2])) in ("1=2&foo=bar", "foo=bar&1=2")
-    @test HTTP.escapeuri(["foo" => "bar", 1 => 2]) == "foo=bar&1=2"
+    @test HTTPA.escapeuri([("foo", "bar"), (1, 2)]) == "foo=bar&1=2"
+    @test HTTPA.escapeuri(Dict(["foo" => "bar", 1 => 2])) in ("1=2&foo=bar", "foo=bar&1=2")
+    @test HTTPA.escapeuri(["foo" => "bar", 1 => 2]) == "foo=bar&1=2"
 
-    @test "user:password" == parse(HTTP.URI, "https://user:password@httphost:9000/path1/path2;paramstring?q=a&p=r#frag").userinfo
+    @test "user:password" == parse(HTTPA.URI, "https://user:password@httphost:9000/path1/path2;paramstring?q=a&p=r#frag").userinfo
 
-    @test HTTP.queryparams(HTTP.URI("https://httphost/path1/path2;paramstring?q=a&p=r#frag")) == Dict("q"=>"a","p"=>"r")
-    @test HTTP.queryparams(HTTP.URI("https://foo.net/?q=a&malformed")) == Dict("q"=>"a","malformed"=>"")
+    @test HTTPA.queryparams(HTTPA.URI("https://httphost/path1/path2;paramstring?q=a&p=r#frag")) == Dict("q"=>"a","p"=>"r")
+    @test HTTPA.queryparams(HTTPA.URI("https://foo.net/?q=a&malformed")) == Dict("q"=>"a","malformed"=>"")
 
 
-    @test false == isvalid(parse(HTTP.URI, "file:///path/to/file/with?should=work#fine"))
-    @test true == isvalid( parse(HTTP.URI, "file:///path/to/file/with%3fshould%3dwork%23fine"))
+    @test false == isvalid(parse(HTTPA.URI, "file:///path/to/file/with?should=work#fine"))
+    @test true == isvalid( parse(HTTPA.URI, "file:///path/to/file/with%3fshould%3dwork%23fine"))
 
-    @test parse(HTTP.URI, "s3://bucket/key") == HTTP.URI(host="bucket", path="/key", scheme="s3")
+    @test parse(HTTPA.URI, "s3://bucket/key") == HTTPA.URI(host="bucket", path="/key", scheme="s3")
 
-    @test sprint(show, parse(HTTP.URI, "http://google.com")) == "HTTP.URI(\"http://google.com\")"
+    @test sprint(show, parse(HTTPA.URI, "http://google.com")) == "HTTPA.URI(\"http://google.com\")"
 
     # Error paths
     # Non-ASCII characters
-    @test_throws HTTP.URIs.ParseError HTTP.URIs.parse_uri("http://🍕.com", strict=true)
+    @test_throws HTTPA.URIs.ParseError HTTPA.URIs.parse_uri("http://🍕.com", strict=true)
     # Unexpected start of URL
-    @test_throws HTTP.URIs.ParseError HTTP.URIs.parse_uri(".google.com", strict=true)
+    @test_throws HTTPA.URIs.ParseError HTTPA.URIs.parse_uri(".google.com", strict=true)
     # Unexpected character after scheme
-    @test_throws HTTP.URIs.ParseError HTTP.URIs.parse_uri("ht!tp://google.com", strict=true)
+    @test_throws HTTPA.URIs.ParseError HTTPA.URIs.parse_uri("ht!tp://google.com", strict=true)
 
     #  Issue #27
-    @test HTTP.escapeuri("t est\n") == "t%20est%0A"
+    @test HTTPA.escapeuri("t est\n") == "t%20est%0A"
 
-    @testset "HTTP.parse(HTTP.URI, str)" begin
+    @testset "HTTPA.parse(HTTPA.URI, str)" begin
 
         urltests = URLTest[
         URLTest("proxy request"
@@ -460,23 +460,23 @@ end
             println("TEST - uri.jl: $(u.name)")
             if u.isconnect
                 if u.shouldthrow
-                    @test_throws HTTP.URIs.ParseError parse_connect_target(u.url)
+                    @test_throws HTTPA.URIs.ParseError parse_connect_target(u.url)
                 else
                     h, p = parse_connect_target(u.url)
                     @test h == u.expecteduri.host
                     @test p == u.expecteduri.port
                 end
             elseif u.shouldthrow
-                @test_throws HTTP.URIs.ParseError HTTP.URIs.parse_uri_reference(u.url, strict=true)
+                @test_throws HTTPA.URIs.ParseError HTTPA.URIs.parse_uri_reference(u.url, strict=true)
             else
-                url = parse(HTTP.URI, u.url)
+                url = parse(HTTPA.URI, u.url)
                 @test u.expecteduri == url
             end
         end
     end
 
     # Issue 323
-    @test string(HTTP.URI(scheme="http", host="example.com")) == "http://example.com"
+    @test string(HTTPA.URI(scheme="http", host="example.com")) == "http://example.com"
 
     @testset "Normalize URI paths" begin
         # Examples given in https://tools.ietf.org/html/rfc3986#section-5.2.4

@@ -2,21 +2,21 @@ module MessagesTest
 
 using ..Test
 
-using HTTP.Messages
-import HTTP.Messages.appendheader
-import HTTP.URI
-import HTTP.request
-import HTTP: bytes
+using HTTPA.Messages
+import HTTPA.Messages.appendheader
+import HTTPA.URI
+import HTTPA.request
+import HTTPA: bytes
 
-using HTTP: StatusError
+using HTTPA: StatusError
 
-using HTTP.MessageRequest: bodylength
-using HTTP.MessageRequest: bodybytes
-using HTTP.MessageRequest: unknown_length
+using HTTPA.MessageRequest: bodylength
+using HTTPA.MessageRequest: bodybytes
+using HTTPA.MessageRequest: unknown_length
 
 using JSON
 
-@testset "HTTP.Messages" begin
+@testset "HTTPA.Messages" begin
 
     @test bodylength(7) == unknown_length
     @test bodylength(UInt8[1,2,3]) == 3
@@ -50,8 +50,8 @@ using JSON
     #display(req); println()
     #display(res); println()
 
-    @test String(req) == "GET /foo HTTP/1.1\r\nFoo: Bar\r\n\r\n"
-    @test String(res) == "HTTP/1.1 200 OK\r\nContent-Length: 5\r\n\r\nHello"
+    @test String(req) == "GET /foo HTTPA/1.1\r\nFoo: Bar\r\n\r\n"
+    @test String(res) == "HTTPA/1.1 200 OK\r\nContent-Length: 5\r\n\r\nHello"
 
     @test header(req, "Foo") == "Bar"
     @test header(res, "Content-Length") == "5"
@@ -79,8 +79,8 @@ using JSON
     @test filter(x->first(x) == "Set-Cookie", req.headers) ==
         ["Set-Cookie" => "A", "Set-Cookie" => "B"]
 
-    @test Messages.httpversion(req) == "HTTP/1.1"
-    @test Messages.httpversion(res) == "HTTP/1.1"
+    @test Messages.httpversion(req) == "HTTPA/1.1"
+    @test Messages.httpversion(res) == "HTTPA/1.1"
 
     raw = String(req)
     #@show raw

@@ -2298,7 +2298,7 @@
         "id": "12",
         "name": "",
         "base": "http://host/a",
-        "rel": "HTTP:/path",
+        "rel": "HTTPA:/path",
         "expect_rel": "http://host/path"
       },
       {
@@ -2611,7 +2611,7 @@
       {
         "id": "2",
         "name": "",
-        "url": "HTTP://example.com/",
+        "url": "HTTPA://example.com/",
         "expect_url": "http://example.com/"
       }
       ]

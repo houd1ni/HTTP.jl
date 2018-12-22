@@ -27,51 +27,51 @@ function getNextId()
 end
 
 # "service" functions to actually do the work
-function createAnimal(req::HTTP.Request)
-    animal = JSON2.read(IOBuffer(HTTP.payload(req)), Animal)
+function createAnimal(req::HTTPA.Request)
+    animal = JSON2.read(IOBuffer(HTTPA.payload(req)), Animal)
     animal.id = getNextId()
     ANIMALS[animal.id] = animal
-    return HTTP.Response(200, JSON2.write(animal))
+    return HTTPA.Response(200, JSON2.write(animal))
 end
 
-function getAnimal(req::HTTP.Request)
-    animalId = HTTP.URIs.splitpath(req.target)[5] # /api/zoo/v1/animals/10, get 10
+function getAnimal(req::HTTPA.Request)
+    animalId = HTTPA.URIs.splitpath(req.target)[5] # /api/zoo/v1/animals/10, get 10
     animal = ANIMALS[animalId]
-    return HTTP.Response(200, JSON2.write(animal))
+    return HTTPA.Response(200, JSON2.write(animal))
 end
 
-function updateAnimal(req::HTTP.Request)
-    animal = JSON2.read(IOBuffer(HTTP.payload(req)), Animal)
+function updateAnimal(req::HTTPA.Request)
+    animal = JSON2.read(IOBuffer(HTTPA.payload(req)), Animal)
     ANIMALS[animal.id] = animal
-    return HTTP.Response(200, JSON2.write(animal))
+    return HTTPA.Response(200, JSON2.write(animal))
 end
 
-function deleteAnimal(req::HTTP.Request)
-    animalId = HTTP.URIs.splitpath(req.target)[5] # /api/zoo/v1/animals/10, get 10
+function deleteAnimal(req::HTTPA.Request)
+    animalId = HTTPA.URIs.splitpath(req.target)[5] # /api/zoo/v1/animals/10, get 10
     delete!(ANIMALS, animal.id)
-    return HTTP.Response(200)
+    return HTTPA.Response(200)
 end
 
 # define REST endpoints to dispatch to "service" functions
-const ANIMAL_ROUTER = HTTP.Router()
-HTTP.@register(ANIMAL_ROUTER, "POST", "/api/zoo/v1/animals", createAnimal)
-HTTP.@register(ANIMAL_ROUTER, "GET", "/api/zoo/v1/animals/*", getAnimal)
-HTTP.@register(ANIMAL_ROUTER, "PUT", "/api/zoo/v1/animals", updateAnimal)
-HTTP.@register(ANIMAL_ROUTER, "DELETE", "/api/zoo/v1/animals/*", deleteAnimal)
+const ANIMAL_ROUTER = HTTPA.Router()
+HTTPA.@register(ANIMAL_ROUTER, "POST", "/api/zoo/v1/animals", createAnimal)
+HTTPA.@register(ANIMAL_ROUTER, "GET", "/api/zoo/v1/animals/*", getAnimal)
+HTTPA.@register(ANIMAL_ROUTER, "PUT", "/api/zoo/v1/animals", updateAnimal)
+HTTPA.@register(ANIMAL_ROUTER, "DELETE", "/api/zoo/v1/animals/*", deleteAnimal)
 ```
 
 Great! At this point, we could spin up our server and let users start managing their animals:
 ```julia
-HTTP.serve(ANIMAL_ROUTER, Sockets.localhost, 8081)
+HTTPA.serve(ANIMAL_ROUTER, Sockets.localhost, 8081)
 ```
 
 Now, you may have noticed that there was a bit of repitition in our "service" functions, particularly
 with regards to the JSON serialization/deserialization. Perhaps we can simplify things by writing
 a custom "JSONHandler" to do some of the repetitive work for us.
 ```julia
-function JSONHandler(req::HTTP.Request)
+function JSONHandler(req::HTTPA.Request)
     # first check if there's any request body
-    body = IOBuffer(HTTP.payload(req))
+    body = IOBuffer(HTTPA.payload(req))
     if eof(body)
         # no request body
         response_body = handle(ANIMAL_ROUTER, req)
@@ -79,28 +79,28 @@ function JSONHandler(req::HTTP.Request)
         # there's a body, so pass it on to the handler we dispatch to
         response_body = handle(ANIMAL_ROUTER, req, JSON2.read(body, Animal))
     end
-    return HTTP.Response(200, JSON2.write(response_body))
+    return HTTPA.Response(200, JSON2.write(response_body))
 end
 
 # **simplified** "service" functions
-function createAnimal(req::HTTP.Request, animal)
+function createAnimal(req::HTTPA.Request, animal)
     animal.id = getNextId()
     ANIMALS[animal.id] = animal
     return animal
 end
 
-function getAnimal(req::HTTP.Request)
-    animalId = HTTP.URIs.splitpath(req.target)[5] # /api/zoo/v1/animals/10, get 10
+function getAnimal(req::HTTPA.Request)
+    animalId = HTTPA.URIs.splitpath(req.target)[5] # /api/zoo/v1/animals/10, get 10
     return ANIMALS[animalId]
 end
 
-function updateAnimal(req::HTTP.Request, animal)
+function updateAnimal(req::HTTPA.Request, animal)
     ANIMALS[animal.id] = animal
     return animal
 end
 
-function deleteAnimal(req::HTTP.Request)
-    animalId = HTTP.URIs.splitpath(req.target)[5] # /api/zoo/v1/animals/10, get 10
+function deleteAnimal(req::HTTPA.Request)
+    animalId = HTTPA.URIs.splitpath(req.target)[5] # /api/zoo/v1/animals/10, get 10
     delete!(ANIMALS, animal.id)
     return ""
 end
@@ -109,12 +109,12 @@ end
 And we modify slightly how we run our server, letting our new `JSONHandler` be the entry point
 instead of our router:
 ```julia
-HTTP.serve(JSONHandler, Sockets.localhost, 8081)
+HTTPA.serve(JSONHandler, Sockets.localhost, 8081)
 ```
 
 Our `JSONHandler` is nice because it saves us a bunch of repitition: if a request body comes in,
 we automatically deserialize it and pass it on to the service function. And each service function
-doesn't need to worry about returning `HTTP.Response`s anymore, but can just focus on returning
+doesn't need to worry about returning `HTTPA.Response`s anymore, but can just focus on returning
 plain Julia objects/strings. The other huge advantage is it provides a clean separation of concerns
 between the "service" layer, which should really concern itself with application logic, and the
 "REST API" layer, which should take care of translating between a web data format (JSON).
@@ -138,32 +138,32 @@ const ANIMALS = Dict{Base.UUID, Dict{Int, Animal}}()
 createUser(req) = Base.UUID(rand(UInt128))
 
 # add an additional endpoint for user creation
-HTTP.@register(ANIMAL_ROUTER, "POST", "/api/zoo/v1/users", createUser)
+HTTPA.@register(ANIMAL_ROUTER, "POST", "/api/zoo/v1/users", createUser)
 # modify service endpoints to have user pass UUID in
-HTTP.@register(ANIMAL_ROUTER, "GET", "/api/zoo/v1/users/*/animals/*", getAnimal)
-HTTP.@register(ANIMAL_ROUTER, "DELETE", "/api/zoo/v1/users/*/animals/*", deleteAnimal)
+HTTPA.@register(ANIMAL_ROUTER, "GET", "/api/zoo/v1/users/*/animals/*", getAnimal)
+HTTPA.@register(ANIMAL_ROUTER, "DELETE", "/api/zoo/v1/users/*/animals/*", deleteAnimal)
 
 # modified service functions to account for multiple users
-function createAnimal(req::HTTP.Request, animal)
+function createAnimal(req::HTTPA.Request, animal)
     animal.id = getNextId()
     ANIMALS[animal.userId][animal.id] = animal
     return animal
 end
 
-function getAnimal(req::HTTP.Request)
-    paths = HTTP.URIs.splitpath(req.target)
+function getAnimal(req::HTTPA.Request)
+    paths = HTTPA.URIs.splitpath(req.target)
     userId = path[5] # /api/zoo/v1/users/x92jf-.../animals/10, get user UUID
     animalId = path[7] # /api/zoo/v1/users/x92jf-.../animals/10, get 10
     return ANIMALS[userId][animalId]
 end
 
-function updateAnimal(req::HTTP.Request, animal)
+function updateAnimal(req::HTTPA.Request, animal)
     ANIMALS[animal.userId][animal.id] = animal
     return animal
 end
 
-function deleteAnimal(req::HTTP.Request)
-    paths = HTTP.URIs.splitpath(req.target)
+function deleteAnimal(req::HTTPA.Request)
+    paths = HTTPA.URIs.splitpath(req.target)
     userId = path[5] # /api/zoo/v1/users/x92jf-.../animals/10, get user UUID
     animalId = path[7] # /api/zoo/v1/users/x92jf-.../animals/10, get 10
     delete!(ANIMALS[userId], animal.id)
@@ -172,19 +172,19 @@ end
 
 # AuthHandler to reject any unknown users
 function AuthHandler(req)
-    if HTTP.hasheader(req, "Animal-UUID")
-        uuid = HTTP.header(req, "Animal-UUID")
+    if HTTPA.hasheader(req, "Animal-UUID")
+        uuid = HTTPA.header(req, "Animal-UUID")
         if haskey(ANIMALS, uuid)
             return JSONHandler(req)
         end
     end
-    return HTTP.Response(401, "unauthorized")
+    return HTTPA.Response(401, "unauthorized")
 end
 ```
 
 And our mofidified server invocation:
 ```julia
-HTTP.serve(AuthHandler, Sockets.localhost, 8081)
+HTTPA.serve(AuthHandler, Sockets.localhost, 8081)
 ```
 
 Let's review what's going on here:
@@ -196,10 +196,10 @@ Let's review what's going on here:
     layer before reaching the service layer. Our `AuthHandler` checks that the user
     provided our security request header `Animal-UUID` and if so, ensures the provided
     UUID corresponds to a valid user. If not, the `AuthHandler` returns a 401
-    HTTP response, signalling that the request is unauthorized
+    HTTPA response, signalling that the request is unauthorized
 
 Voila, hopefully that helps provide a slightly-more-than-trivial example of utilizing the
-HTTP.Handler framework in conjuction with running an HTTP server.
+HTTPA.Handler framework in conjuction with running an HTTPA server.
 """
 module Handlers
 
@@ -210,11 +210,11 @@ export serve, Handler, handle, RequestHandlerFunction, StreamHandlerFunction,
 using ..Messages, ..URIs, ..Streams, ..IOExtras, ..Servers
 
 """
-HTTP.handle(handler::HTTP.RequestHandler, ::HTTP.Request) => HTTP.Response
-HTTP.handle(handler::HTTP.StreamHandler, ::HTTP.Stream)
+HTTPA.handle(handler::HTTPA.RequestHandler, ::HTTPA.Request) => HTTPA.Response
+HTTPA.handle(handler::HTTPA.StreamHandler, ::HTTPA.Stream)
 
 Dispatch function used to handle incoming requests to a server. Can be
-overloaded by custom `HTTP.Handler` subtypes to implement custom "handling"
+overloaded by custom `HTTPA.Handler` subtypes to implement custom "handling"
 behavior.
 """
 function handle end
@@ -222,16 +222,16 @@ function handle end
 abstract type Handler end
 
 """
-Abstract type representing objects that handle `HTTP.Request` and return `HTTP.Response` objects.
+Abstract type representing objects that handle `HTTPA.Request` and return `HTTPA.Response` objects.
 
-See `?HTTP.RequestHandlerFunction` for an example of a concrete implementation.
+See `?HTTPA.RequestHandlerFunction` for an example of a concrete implementation.
 """
 abstract type RequestHandler <: Handler end
 
 """
-Abstract type representing objects that handle `HTTP.Stream` objects directly.
+Abstract type representing objects that handle `HTTPA.Stream` objects directly.
 
-See `?HTTP.StreamHandlerFunction` for an example of a concrete implementation.
+See `?HTTPA.StreamHandlerFunction` for an example of a concrete implementation.
 """
 abstract type StreamHandler <: Handler end
 
@@ -239,7 +239,7 @@ abstract type StreamHandler <: Handler end
 RequestHandlerFunction(f)
 
 A function-wrapper type that is a subtype of `RequestHandler`. Takes a single function as an argument
-that should be of the form `f(::HTTP.Request) => HTTP.Response`
+that should be of the form `f(::HTTPA.Request) => HTTPA.Response`
 """
 struct RequestHandlerFunction{F} <: RequestHandler
     func::F # func(req)
@@ -251,7 +251,7 @@ handle(h::RequestHandlerFunction, req::Request) = h.func(req)
 StreamHandlerFunction(f)
 
 A function-wrapper type that is a subtype of `StreamHandler`. Takes a single function as an argument
-that should be of the form `f(::HTTP.Stream) => Nothing`, i.e. it accepts a raw `HTTP.Stream`,
+that should be of the form `f(::HTTPA.Stream) => Nothing`, i.e. it accepts a raw `HTTPA.Stream`,
 handles the incoming request, writes a response back out to the stream directly, then returns.
 """
 struct StreamHandlerFunction{F} <: StreamHandler
@@ -276,17 +276,17 @@ end
 const FourOhFour = RequestHandlerFunction(req -> Response(404))
 
 """
-    HTTP.serve([host=Sockets.localhost[, port=8081]]; kw...) do req::HTTP.Request
+    HTTPA.serve([host=Sockets.localhost[, port=8081]]; kw...) do req::HTTPA.Request
         ...
     end
-    HTTP.serve([host=Sockets.localhost[, port=8081]]; stream=true, kw...) do stream::HTTP.Stream
+    HTTPA.serve([host=Sockets.localhost[, port=8081]]; stream=true, kw...) do stream::HTTPA.Stream
         ...
     end
-    HTTP.serve(handler, [host=Sockets.localhost[, port=8081]]; kw...)
+    HTTPA.serve(handler, [host=Sockets.localhost[, port=8081]]; kw...)
 
-Listen for HTTP connections and handle each request received. The "handler" can be a function
-that operates directly on `HTTP.Stream`, `HTTP.Request`, or any kind of `HTTP.Handler` instance.
-For functions like `f(::HTTP.Stream)`, also pass `stream=true` to signal a streaming handler.
+Listen for HTTPA connections and handle each request received. The "handler" can be a function
+that operates directly on `HTTPA.Stream`, `HTTPA.Request`, or any kind of `HTTPA.Handler` instance.
+For functions like `f(::HTTPA.Stream)`, also pass `stream=true` to signal a streaming handler.
 
 Optional keyword arguments:
  - `sslconfig=nothing`, Provide an `MbedTLS.SSLConfig` object to handle ssl connections.
@@ -303,19 +303,19 @@ Optional keyword arguments:
  - `connection_count::Ref{Int}`, reference to track the # of currently open connections.
  - `rate_limit::Rational{Int}=nothing"`, number of `connections//second` allowed
     per client IP address; excess connections are immediately closed. e.g. 5//1.
- - `stream::Bool=false`, the handler will operate on an `HTTP.Stream` instead of `HTTP.Request`
+ - `stream::Bool=false`, the handler will operate on an `HTTPA.Stream` instead of `HTTPA.Request`
  - `verbose::Bool=false`, log connection information to `stdout`.
 
 e.g.
 ```
-    HTTP.serve(; stream=true) do http::HTTP.Stream
+    HTTPA.serve(; stream=true) do http::HTTPA.Stream
         @show http.message
-        @show HTTP.header(http, "Content-Type")
+        @show HTTPA.header(http, "Content-Type")
         while !eof(http)
             println("body data: ", String(readavailable(http)))
         end
-        HTTP.setstatus(http, 404)
-        HTTP.setheader(http, "Foo-Header" => "bar")
+        HTTPA.setstatus(http, 404)
+        HTTPA.setheader(http, "Foo-Header" => "bar")
         startwrite(http)
         write(http, "response body")
         write(http, "more response body")
@@ -324,8 +324,8 @@ e.g.
 
     # pass in own server socket to control shutdown
     server = Sockets.serve(Sockets.InetAddr(parse(IPAddr, host), port))
-    @async HTTP.serve(f, host, port; server=server)
-    # close server which will stop HTTP.serve
+    @async HTTPA.serve(f, host, port; server=server)
+    # close server which will stop HTTPA.serve
     close(server)
 ```
 """
@@ -343,17 +343,17 @@ struct Route
     path::String
 end
 getprt(s) = isempty(s) ? "*" : s
-Base.show(io::IO, r::Route) = print(io, "HTTP.Route(method=$(getprt(r.method)), scheme=$(getprt(r.scheme)), host=$(getprt(r.host)), path=$(r.path))")
+Base.show(io::IO, r::Route) = print(io, "HTTPA.Route(method=$(getprt(r.method)), scheme=$(getprt(r.scheme)), host=$(getprt(r.host)), path=$(r.path))")
 
 """
-HTTP.Router(h::Handler)
-HTTP.Router(f::Function)
-HTTP.Router()
+HTTPA.Router(h::Handler)
+HTTPA.Router(f::Function)
+HTTPA.Router()
 
-An `HTTP.Handler` type that supports pattern matching request url paths to registered `HTTP.Handler`s.
+An `HTTPA.Handler` type that supports pattern matching request url paths to registered `HTTPA.Handler`s.
 Can accept a default `Handler` or `Function` that will be used in case no other handlers match; by
 default, a 404 response handler is used.
-Paths can be mapped to a handler via `HTTP.@register(r::Router, path, handler)`, see `?HTTP.@register` for more details.
+Paths can be mapped to a handler via `HTTPA.@register(r::Router, path, handler)`, see `?HTTPA.@register` for more details.
 """
 struct Router{sym} <: Handler
     default::Handler
@@ -384,7 +384,7 @@ function newsplitsegments(segments)
     return vals
 end
 
-"Dispatch function from a request target to router handler mapping; each `HTTP.@register` defines a new method to `gethandler` for a specific router to dispatch on"
+"Dispatch function from a request target to router handler mapping; each `HTTPA.@register` defines a new method to `gethandler` for a specific router to dispatch on"
 function gethandler end
 "fallback for all routers, calls the default handler the router was created with"
 gethandler(r::Router, args...) = r.default
@@ -394,16 +394,16 @@ gh(s::String) = isempty(s) ? Any : Val{Symbol(s)}
 gh(s::Symbol) = Val{s}
 
 function generate_gethandler(router, method, scheme, host, path, handler)
-    vals = :(HTTP.Handlers.newsplitsegments(map(String, split($path, '/'; keepempty=false)))...)
+    vals = :(HTTPA.Handlers.newsplitsegments(map(String, split($path, '/'; keepempty=false)))...)
     q = esc(quote
-        $(router).routes[HTTP.Handlers.Route(string($method), string($scheme), string($host), string($path))] = $handler
-        @eval function HTTP.Handlers.gethandler(r::$(Expr(:$, :(typeof($router)))),
-            ::(HTTP.Handlers.gh($method)),
-            ::(HTTP.Handlers.gh($scheme)),
-            ::(HTTP.Handlers.gh($host)),
+        $(router).routes[HTTPA.Handlers.Route(string($method), string($scheme), string($host), string($path))] = $handler
+        @eval function HTTPA.Handlers.gethandler(r::$(Expr(:$, :(typeof($router)))),
+            ::(HTTPA.Handlers.gh($method)),
+            ::(HTTPA.Handlers.gh($scheme)),
+            ::(HTTPA.Handlers.gh($host)),
             $(Expr(:$, vals)),
             args...)
-            return $(Expr(:$, handler)) isa HTTP.Handler ? $(Expr(:$, handler)) : HTTP.Handlers.RequestHandlerFunction($(Expr(:$, handler)))
+            return $(Expr(:$, handler)) isa HTTPA.Handler ? $(Expr(:$, handler)) : HTTPA.Handlers.RequestHandlerFunction($(Expr(:$, handler)))
         end
     end)
     # @show q
@@ -411,16 +411,16 @@ function generate_gethandler(router, method, scheme, host, path, handler)
 end
 
 """
-HTTP.@register(r::Router, path, handler)
-HTTP.@register(r::Router, method::String, path, handler)
-HTTP.@register(r::Router, method::String, scheme::String, host::String, path, handler)
+HTTPA.@register(r::Router, path, handler)
+HTTPA.@register(r::Router, method::String, path, handler)
+HTTPA.@register(r::Router, method::String, scheme::String, host::String, path, handler)
 
-Function to map request urls matching `path` and optional method, scheme, host to another `handler::HTTP.Handler`.
+Function to map request urls matching `path` and optional method, scheme, host to another `handler::HTTPA.Handler`.
 URL paths are registered one at a time, and multiple urls can map to the same handler.
 The URL can be passed as a String. Requests can be routed based on: method, scheme, hostname, or path.
 The following examples show how various urls will direct how a request is routed by a server:
 
-- `"http://*"`: match all HTTP requests, regardless of path
+- `"http://*"`: match all HTTPA requests, regardless of path
 - `"https://*"`: match all HTTPS requests, regardless of path
 - `"/gmail"`: regardless of scheme or host, match any request with a path starting with "gmail"
 - `"/gmail/userId/*/inbox`: match any request matching the path pattern, "*" is used as a wildcard that matches any value between the two "/"
@@ -481,7 +481,7 @@ function splitsegments(r::Router, segments)
     return vals
 end
 function register!(r::Router{id}, method, scheme, host, path, handler) where {id}
-    Base.depwarn("`HTTP.register!(r::Router, ...)` is deprecated, use `HTTP.@register r ...` instead", nothing)
+    Base.depwarn("`HTTPA.register!(r::Router, ...)` is deprecated, use `HTTPA.@register r ...` instead", nothing)
     # save string => Val mappings in r.segments
     segments = map(String, split(path, '/'; keepempty=false))
     vals = splitsegments(r, segments)

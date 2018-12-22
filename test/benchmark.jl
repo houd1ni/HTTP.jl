@@ -2,15 +2,15 @@ using Unitful
 
 include("http_parser_benchmark.jl")
 
-using HTTP
-using HTTP.IOExtras
-using HTTP.ConnectionPool
-using HTTP.Streams
-using HTTP.Messages
+using HTTPA
+using HTTPA.IOExtras
+using HTTPA.ConnectionPool
+using HTTPA.Streams
+using HTTPA.Messages
 
 responses = [
 "github" => """
-HTTP/1.1 200 OK\r
+HTTPA/1.1 200 OK\r
 Date: Mon, 15 Jan 2018 00:57:33 GMT\r
 Content-Type: text/html; charset=utf-8\r
 Transfer-Encoding: chunked\r
@@ -36,7 +36,7 @@ X-GitHub-Request-Id: EB38:2597E:1126615:197B74F:5A5BFC7B\r
 """
 ,
 "wikipedia" => """
-HTTP/1.1 200 OK\r
+HTTPA/1.1 200 OK\r
 Date: Mon, 15 Jan 2018 01:05:05 GMT\r
 Content-Type: text/html\r
 Content-Length: 74711\r
@@ -63,7 +63,7 @@ Accept-Ranges: bytes\r
 """
 ,
 "netflix" => """
-HTTP/1.1 200 OK\r
+HTTPA/1.1 200 OK\r
 Cache-Control: no-cache, no-store, must-revalidate\r
 Content-Type: text/html; charset=utf-8\r
 Date: Mon, 15 Jan 2018 01:06:12 GMT\r
@@ -92,7 +92,7 @@ Connection: keep-alive\r
 """
 ,
 "twitter" => """
-HTTP/1.1 200 OK\r
+HTTPA/1.1 200 OK\r
 cache-control: no-cache, no-store, must-revalidate, pre-check=0, post-check=0\r
 content-length: 324899\r
 content-type: text/html;charset=utf-8\r
@@ -116,7 +116,7 @@ x-xss-protection: 1; mode=block; report=https://twitter.com/i/xss_report\r
 """
 ,
 "akamai" => """
-HTTP/1.1 403 Forbidden\r
+HTTPA/1.1 403 Forbidden\r
 Server: AkamaiGHost\r
 Mime-Version: 1.0\r
 Content-Type: text/html\r
@@ -129,7 +129,7 @@ Vary: User-Agent\r
 """
 ,
 "nytimes" => """
-HTTP/1.1 200 OK\r
+HTTPA/1.1 200 OK\r
 Server: Apache\r
 Cache-Control: no-cache\r
 X-ESI: 1\r
@@ -221,12 +221,12 @@ function go(count::Int)
             unread!(http.stream, readavailable(http.stream))
 
                                                                 t_setup = time()
-            HTTP.Streams.readheaders(http.stream, http.message)
+            HTTPA.Streams.readheaders(http.stream, http.message)
                                                          t_headers_done = time()
-            HTTP.Streams.handle_continue(http)
+            HTTPA.Streams.handle_continue(http)
 
-            http.readchunked = HTTP.Messages.ischunked(http.message)
-            http.ntoread = HTTP.Messages.bodylength(http.message)
+            http.readchunked = HTTPA.Messages.ischunked(http.message)
+            http.ntoread = HTTPA.Messages.bodylength(http.message)
 
         #    return http.message
         #end

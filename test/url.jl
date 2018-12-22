@@ -1,16 +1,16 @@
 using Test
 using JSON
 
-using HTTP
+using HTTPA
 
-@testset "HTTP.URL" begin
+@testset "HTTPA.URL" begin
 
     tests = JSON.parse(String(read("cweb-urls.json")))["tests"]["group"]
 
 for group in tests
 
     name = group["name"]
-    @testset "HTTP.URL.$name" begin
+    @testset "HTTPA.URL.$name" begin
 
         println(name)
 
@@ -24,9 +24,9 @@ for group in tests
             url = test["url"]
             uri = nothing
             try
-                uri = HTTP.URIs.parse_uri_reference(url; strict=true)
+                uri = HTTPA.URIs.parse_uri_reference(url; strict=true)
             catch e
-                if e isa HTTP.URIs.ParseError
+                if e isa HTTPA.URIs.ParseError
                     println(e)
                     continue
                 elseif e isa AssertionError
@@ -50,4 +50,4 @@ for group in tests
 end
     
 
-end # @testset "HTTP.URL"
+end # @testset "HTTPA.URL"

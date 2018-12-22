@@ -161,7 +161,7 @@ http://www.example.com/?q=ﰀ
 http://www.example.com/?q=&lt;asdf&gt;
 http://www.example.com/?q="asdf"
 http://example.com/
-HTTP://example.com/
+HTTPA://example.com/
 http://www.google.com/foo?bar=baz#
 http:////////user:@google.com:99?foo
 http://192.0x00A80001

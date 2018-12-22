@@ -1,10 +1,10 @@
-# See https://github.com/JuliaWeb/HTTP.jl/pull/288
+# See https://github.com/JuliaWeb/HTTPA.jl/pull/288
 
 using Test
-using HTTP
+using HTTPA
 using BufferedStreams
 
-@testset "HTTP.Issues.288" begin
+@testset "HTTPA.Issues.288" begin
 
 sz = 90
 
@@ -21,7 +21,7 @@ decoded_data = "data: 1$(repeat("x", sz))\n\n" *
 split1 = 106
 split2 = 300
 
-@async HTTP.listen("127.0.0.1", 8091) do http
+@async HTTPA.listen("127.0.0.1", 8091) do http
     startwrite(http)
 
     tcp = http.stream.c.io
@@ -40,7 +40,7 @@ end
 
 sleep(1)
 
-r = HTTP.get("http://127.0.0.1:8091")
+r = HTTPA.get("http://127.0.0.1:8091")
 
 @test String(r.body) == decoded_data
 
@@ -52,7 +52,7 @@ for wrap in (identity, BufferedInputStream)
 
     r = ""
 
-    HTTP.open("GET", "http://127.0.0.1:8091") do io
+    HTTPA.open("GET", "http://127.0.0.1:8091") do io
 
         io = wrap(io)
 

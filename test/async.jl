@@ -1,24 +1,24 @@
 using Test
-using HTTP
-using HTTP.Base64
-using HTTP.Sockets
+using HTTPA
+using HTTPA.Base64
+using HTTPA.Sockets
 using JSON
 using MbedTLS: digest, MD_MD5, MD_SHA256
 
-using HTTP.IOExtras
-using HTTP: request
+using HTTPA.IOExtras
+using HTTPA: request
 
 
 println("async tests")
 
 stop_pool_dump = false
 
-@async HTTP.listen() do http
-    @show HTTP.Sockets.getsockname(http)
+@async HTTPA.listen() do http
+    @show HTTPA.Sockets.getsockname(http)
     startwrite(http)
     write(http, """
         <html><head>
-            <title>HTTP.jl Connection Pool</title>
+            <title>HTTPA.jl Connection Pool</title>
             <meta http-equiv="refresh" content="1">
             <style type="text/css" media="screen">
                 td { padding-left: 5px; padding-right: 5px }
@@ -28,7 +28,7 @@ stop_pool_dump = false
     """)
     write(http, "<body><pre>")
     buf = IOBuffer()
-    HTTP.ConnectionPool.showpoolhtml(buf)
+    HTTPA.ConnectionPool.showpoolhtml(buf)
     write(http, take!(buf))
     write(http, "</pre></body>")
 end
@@ -39,7 +39,7 @@ end
         run(`open http://localhost:8081`)
     catch e
         while !stop_pool_dump
-            HTTP.ConnectionPool.showpool(stdout)
+            HTTPA.ConnectionPool.showpool(stdout)
             sleep(1)
         end
     end
@@ -108,7 +108,7 @@ conf = [:reuse_limit => 90,
         url = "$s3url/http.jl.test/file$i"
         r = nothing
         if mode == :open
-            r = HTTP.open("PUT", url, ["Content-Length" => sz];
+            r = HTTPA.open("PUT", url, ["Content-Length" => sz];
                     body_sha256=digest(MD_SHA256, data),
                     body_md5=digest(MD_MD5, data),
                     aws_authorization=true,
@@ -120,11 +120,11 @@ conf = [:reuse_limit => 90,
             end
         end
         if mode == :request
-            r = HTTP.request("PUT", url, [], data;
+            r = HTTPA.request("PUT", url, [], data;
                     aws_authorization=true, conf...)
         end
         #println("S3 put file$i")
-        @assert strip(HTTP.header(r, "ETag"), '"') == md5
+        @assert strip(HTTPA.header(r, "ETag"), '"') == md5
     catch e
         dump_async_exception(e, stacktrace(catch_backtrace()))
         rethrow(e)
@@ -140,7 +140,7 @@ get_data_sums = Dict()
             buf = Base.BufferStream()
             r = nothing
             if mode == :open
-                r = HTTP.open("GET", url, ["Content-Length" => 0];
+                r = HTTPA.open("GET", url, ["Content-Length" => 0];
                               aws_authorization=true,
                               conf...) do http
                     buf = Base.BufferStream() # in case of retry!
@@ -152,13 +152,13 @@ get_data_sums = Dict()
                 end
             end
             if mode == :request
-                r = HTTP.request("GET", url; response_stream=buf,
+                r = HTTPA.request("GET", url; response_stream=buf,
                                              aws_authorization=true, conf...)
             end
             #println("S3 get file$i")
             bytes = read(buf)
             md5 = bytes2hex(digest(MD_MD5, bytes))
-            get_data_sums[i] = (md5, strip(HTTP.header(r, "ETag"), '"'))
+            get_data_sums[i] = (md5, strip(HTTPA.header(r, "ETag"), '"'))
         catch e
             dump_async_exception(e, stacktrace(catch_backtrace()))
             rethrow(e)
@@ -197,7 +197,7 @@ println("running async $count, 1:$num, $config, $http A")
     @sync begin
         for i = 1:min(num,100)
             @async try
-                r = HTTP.request("GET",
+                r = HTTPA.request("GET",
                  "$http://httpbin.org/headers", ["i" => i]; config...)
                 r = JSON.parse(String(r.body))
                 push!(result, r["headers"]["I"] => string(i))
@@ -211,8 +211,8 @@ println("running async $count, 1:$num, $config, $http A")
         @test a == b
     end
 
-    HTTP.ConnectionPool.showpool(stdout)
-    HTTP.ConnectionPool.closeall()
+    HTTPA.ConnectionPool.showpool(stdout)
+    HTTPA.ConnectionPool.closeall()
 
     result = []
 
@@ -221,7 +221,7 @@ println("running async $count, 1:$num, $config, $http B")
     @sync begin
         for i = 1:min(num,100)
             @async try
-                r = HTTP.request("GET",
+                r = HTTPA.request("GET",
                      "$http://httpbin.org/stream/$i"; config...)
                 r = String(r.body)
                 r = split(strip(r), "\n")
@@ -237,8 +237,8 @@ println("running async $count, 1:$num, $config, $http B")
         @test a == b
     end
 
-    HTTP.ConnectionPool.showpool(stdout)
-    HTTP.ConnectionPool.closeall()
+    HTTPA.ConnectionPool.showpool(stdout)
+    HTTPA.ConnectionPool.closeall()
 
     result = []
 
@@ -246,7 +246,7 @@ println("running async $count, 1:$num, $config, $http B")
     asyncmap(i->begin
         n = i % 20 + 1
         str = ""
-        r = HTTP.open("GET", "$http://httpbin.org/stream/$n";
+        r = HTTPA.open("GET", "$http://httpbin.org/stream/$n";
                       retries=5, config...) do s
             str = String(read(s))
         end
@@ -279,14 +279,14 @@ println("running async $count, 1:$num, $config, $http C")
                             try
                                 #println("GET $i $n Base.BufferStream $attempt")
                                 s = Base.BufferStream()
-                                r = HTTP.request(
+                                r = HTTPA.request(
                                     "GET", url; response_stream=s, config...)
                                 @assert r.status == 200
                                 str = String(read(s))
                                 break
                             catch e
                                 if attempt == 10 ||
-                                   !HTTP.RetryRequest.isrecoverable(e)
+                                   !HTTPA.RetryRequest.isrecoverable(e)
                                     rethrow(e)
                                 end
                                 buf = IOBuffer()
@@ -297,13 +297,13 @@ println("running async $count, 1:$num, $config, $http C")
                         end
                     else
                         #println("GET $i $n Plain")
-                        r = HTTP.request("GET", url; config...)
+                        r = HTTPA.request("GET", url; config...)
                         @assert r.status == 200
                         str = String(r.body)
                     end
                 else
                     #println("GET $i $n open()")
-                    r = HTTP.open("GET", url; config...) do http
+                    r = HTTPA.open("GET", url; config...) do http
                         str = String(read(http))
                     end
                     @assert r.status == 200
@@ -328,8 +328,8 @@ println("running async $count, 1:$num, $config, $http C")
         @test a == b
     end
 
-    HTTP.ConnectionPool.showpool(stdout)
-    HTTP.ConnectionPool.closeall()
+    HTTPA.ConnectionPool.showpool(stdout)
+    HTTPA.ConnectionPool.closeall()
 
 
     if !haskey(ENV, "HTTP_JL_TEST_LONG_ASYNC")
@@ -340,6 +340,6 @@ end # testset
 
 stop_pool_dump=true
 
-HTTP.ConnectionPool.showpool(stdout)
+HTTPA.ConnectionPool.showpool(stdout)
 
 println("async tests done")

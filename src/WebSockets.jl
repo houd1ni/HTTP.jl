@@ -2,11 +2,11 @@ module WebSockets
 
 using ..Base64
 using MbedTLS: digest, MD_SHA1, SSLContext
-import ..HTTP
+import ..HTTPA
 using ..IOExtras
 using ..Streams
 import ..ConnectionPool
-using HTTP: header, headercontains
+using HTTPA: header, headercontains
 import ..@debug, ..DEBUG_LEVEL, ..@require, ..precondition_error
 import ..string
 
@@ -50,11 +50,11 @@ end
 
 # Handshake
 
-function is_upgrade(r::HTTP.Message)
-    ((r isa HTTP.Request && r.method == "GET") ||
-     (r isa HTTP.Response && r.status == 101)) &&
-    HTTP.headercontains(r, "Connection", "upgrade") &&
-    HTTP.hasheader(r, "Upgrade", "websocket")
+function is_upgrade(r::HTTPA.Message)
+    ((r isa HTTPA.Request && r.method == "GET") ||
+     (r isa HTTPA.Response && r.status == 101)) &&
+    HTTPA.headercontains(r, "Connection", "upgrade") &&
+    HTTPA.hasheader(r, "Upgrade", "websocket")
 end
 
 function check_upgrade(http)
@@ -87,7 +87,7 @@ function open(f::Function, url; binary=false, verbose=false, kw...)
         "Sec-WebSocket-Version" => "13"
     ]
 
-    HTTP.open("GET", url, headers;
+    HTTPA.open("GET", url, headers;
               reuse_limit=0, verbose=verbose ? 2 : 0, kw...) do http
 
         startread(http)
@@ -118,12 +118,12 @@ function listen(f::Function,
                 host::String="localhost", port::UInt16=UInt16(8081);
                 binary=false, verbose=false)
 
-    HTTP.listen(host, port; verbose=verbose) do http
+    HTTPA.listen(host, port; verbose=verbose) do http
         upgrade(f, http; binary=binary)
     end
 end
 
-function upgrade(f::Function, http::HTTP.Stream; binary=false)
+function upgrade(f::Function, http::HTTPA.Stream; binary=false)
 
     check_upgrade(http)
     if !hasheader(http, "Sec-WebSocket-Version", "13")

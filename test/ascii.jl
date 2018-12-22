@@ -1,9 +1,9 @@
-using HTTP
+using HTTPA
 
-@testset "HTTP.ascii" begin
+@testset "HTTPA.ascii" begin
 
-    lc = HTTP.Messages.ascii_lc
-    lceq = HTTP.Messages.ascii_lc_isequal
+    lc = HTTPA.Messages.ascii_lc
+    lceq = HTTPA.Messages.ascii_lc_isequal
 
     for c in UInt8(1):UInt8(127)
         @test lc(c) == UInt8(lowercase(Char(c)))

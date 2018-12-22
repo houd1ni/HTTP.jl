@@ -1,12 +1,12 @@
 using Test
-using HTTP
-using HTTP.IOExtras, HTTP.Sockets
+using HTTPA
+using HTTPA.IOExtras, HTTPA.Sockets
 
 @testset "WebSockets" begin
 
 for s in ["wss", "ws"]
 
-    HTTP.WebSockets.open("$s://echo.websocket.org") do io
+    HTTPA.WebSockets.open("$s://echo.websocket.org") do io
         println("writing")
         write(io, "Foo")
         println("testing")
@@ -29,9 +29,9 @@ for s in ["wss", "ws"]
 end
 
 p = 8085 # rand(8000:8999)
-@async HTTP.listen(Sockets.localhost, p) do http
-    if HTTP.WebSockets.is_upgrade(http.message)
-        HTTP.WebSockets.upgrade(http) do ws
+@async HTTPA.listen(Sockets.localhost, p) do http
+    if HTTPA.WebSockets.is_upgrade(http.message)
+        HTTPA.WebSockets.upgrade(http) do ws
             while !eof(ws)
                 data = readavailable(ws)
                 write(ws, data)
@@ -43,7 +43,7 @@ end
 sleep(2)
 
 println("Testing local server...")
-HTTP.WebSockets.open("ws://127.0.0.1:$(p)") do ws
+HTTPA.WebSockets.open("ws://127.0.0.1:$(p)") do ws
     write(ws, "Foo")
     @test String(readavailable(ws)) == "Foo"
 

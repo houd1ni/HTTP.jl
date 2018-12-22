@@ -2,18 +2,18 @@ const test_cases = [
     ("Empty", UInt8[], "text/plain; charset=utf-8"),
     ("Binary", UInt8[1, 2, 3], "application/octet-stream"),
 
-    ("HTML document #1", HTTP.bytes("<HtMl><bOdY>blah blah blah</body></html>"), "text/html; charset=utf-8"),
-    ("HTML document #2", HTTP.bytes("<HTML></HTML>"), "text/html; charset=utf-8"),
-    ("HTML document #3 (leading whitespace)", HTTP.bytes("   <!DOCTYPE HTML>..."), "text/html; charset=utf-8"),
-    ("HTML document #4 (leading CRLF)", HTTP.bytes("\r\n<html>..."), "text/html; charset=utf-8"),
+    ("HTML document #1", HTTPA.bytes("<HtMl><bOdY>blah blah blah</body></html>"), "text/html; charset=utf-8"),
+    ("HTML document #2", HTTPA.bytes("<HTML></HTML>"), "text/html; charset=utf-8"),
+    ("HTML document #3 (leading whitespace)", HTTPA.bytes("   <!DOCTYPE HTML>..."), "text/html; charset=utf-8"),
+    ("HTML document #4 (leading CRLF)", HTTPA.bytes("\r\n<html>..."), "text/html; charset=utf-8"),
 
-    ("Plain text", HTTP.bytes("This is not HTML. It has ☃ though."), "text/plain; charset=utf-8"),
+    ("Plain text", HTTPA.bytes("This is not HTML. It has ☃ though."), "text/plain; charset=utf-8"),
 
-    ("XML", HTTP.bytes("\n<?xml!"), "text/xml; charset=utf-8"),
+    ("XML", HTTPA.bytes("\n<?xml!"), "text/xml; charset=utf-8"),
 
     # Image types.
-    ("GIF 87a", HTTP.bytes("GIF87a"), "image/gif"),
-    ("GIF 89a", HTTP.bytes("GIF89a..."), "image/gif"),
+    ("GIF 87a", HTTPA.bytes("GIF87a"), "image/gif"),
+    ("GIF 89a", HTTPA.bytes("GIF89a..."), "image/gif"),
 
     # Audio types.
     ("MIDI audio", UInt8['M','T','h','d',0x00,0x00,0x00,0x06,0x00,0x01], "audio/midi"),
@@ -29,13 +29,13 @@ const test_cases = [
     ("AVI video #2", UInt8['R','I','F','F',',','\n',0x00,0x00,'A','V','I',' ','L','I','S','T','À'], "video/avi"),
 ]
 
-@testset "HTTP.sniff" begin
+@testset "HTTPA.sniff" begin
     for case in test_cases
         println("TEST - sniff.jl: ", case[1])
-        @test HTTP.sniff(case[2]) == case[3]
+        @test HTTPA.sniff(case[2]) == case[3]
     end
 
-    @test HTTP.sniff(IOBuffer(test_cases[1][2])) == HTTP.sniff(test_cases[1][2])
+    @test HTTPA.sniff(IOBuffer(test_cases[1][2])) == HTTPA.sniff(test_cases[1][2])
 end
 
 json_strings = [
@@ -246,12 +246,12 @@ json_strings = [
 """
 ]
 
-@testset "HTTP.isjson" begin
-    @test !HTTP.isjson("")[1]
+@testset "HTTPA.isjson" begin
+    @test !HTTPA.isjson("")[1]
     for str in json_strings
-        @test HTTP.isjson(HTTP.bytes(str))[1]
+        @test HTTPA.isjson(HTTPA.bytes(str))[1]
     end
-    @test HTTP.sniff(IOBuffer(test_cases[1][2])) == HTTP.sniff(test_cases[1][2])
+    @test HTTPA.sniff(IOBuffer(test_cases[1][2])) == HTTPA.sniff(test_cases[1][2])
 end
 
 json_strings = [
@@ -462,9 +462,9 @@ json_strings = [
 """
 ]
 
-@testset "HTTP.isjson" begin
-    @test !HTTP.isjson("")[1]
+@testset "HTTPA.isjson" begin
+    @test !HTTPA.isjson("")[1]
     for str in json_strings
-        @test HTTP.isjson(HTTP.bytes(str))[1]
+        @test HTTPA.isjson(HTTPA.bytes(str))[1]
     end
 end

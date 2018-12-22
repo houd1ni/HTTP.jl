@@ -1,10 +1,10 @@
 using Test
-using HTTP
-using HTTP.IOExtras
-using HTTP.Parsers
-using HTTP.Messages
-using HTTP.Sockets
-using HTTP.MessageRequest: bodylength
+using HTTPA
+using HTTPA.IOExtras
+using HTTPA.Parsers
+using HTTPA.Messages
+using HTTPA.Sockets
+using HTTPA.MessageRequest: bodylength
 
 mutable struct FunctionIO <: IO
     f::Function
@@ -39,7 +39,7 @@ Base.unsafe_read(lb::Loopback, p::Ptr, n::Integer) = unsafe_read(lb.io, p, n)
 Base.close(lb::Loopback) = (close(lb.io); close(lb.buf))
 Base.isopen(lb::Loopback) = isopen(lb.io)
 
-HTTP.ConnectionPool.tcpstatus(c::HTTP.ConnectionPool.Connection{Loopback}) = "🤖 "
+HTTPA.ConnectionPool.tcpstatus(c::HTTPA.ConnectionPool.Connection{Loopback}) = "🤖 "
 
 """
     escapelines(string)
@@ -65,7 +65,7 @@ function on_headers(f, lb)
         readheaders(buf, req)
         lb.got_headers = true
     catch e
-        if !(e isa EOFError || e isa HTTP.ParseError)
+        if !(e isa EOFError || e isa HTTPA.ParseError)
             rethrow(e)
         end
     end
@@ -81,9 +81,9 @@ function on_body(f, lb)
     #println("\"\"\"")
     req = nothing
     try
-        req = parse(HTTP.Request, s)
+        req = parse(HTTPA.Request, s)
     catch e
-        if !(e isa EOFError || e isa HTTP.ParseError)
+        if !(e isa EOFError || e isa HTTPA.ParseError)
             rethrow(e)
         end
     end
@@ -109,14 +109,14 @@ function Base.unsafe_write(lb::Loopback, p::Ptr{UInt8}, n::UInt)
 
     on_headers(lb) do req
 
-        println("📡  $(HTTP.sprintcompact(req))")
-        push!(server_events, "Request: $(HTTP.sprintcompact(req))")
+        println("📡  $(HTTPA.sprintcompact(req))")
+        push!(server_events, "Request: $(HTTPA.sprintcompact(req))")
 
         if req.target == "/abort"
             reset(lb)
-            response = HTTP.Response(403, ["Connection" => "close",
+            response = HTTPA.Response(403, ["Connection" => "close",
                                           "Content-Length" => 0]; request=req)
-            push!(server_events, "Response: $(HTTP.sprintcompact(response))")
+            push!(server_events, "Response: $(HTTPA.sprintcompact(response))")
             write(lb.io, response)
         end
     end
@@ -124,21 +124,21 @@ function Base.unsafe_write(lb::Loopback, p::Ptr{UInt8}, n::UInt)
     on_body(lb) do req
 
         l = length(req.body)
-        response = HTTP.Response(200, ["Content-Length" => l],
+        response = HTTPA.Response(200, ["Content-Length" => l],
                                       body = req.body; request=req)
         if req.target == "/echo"
-            push!(server_events, "Response: $(HTTP.sprintcompact(response))")
+            push!(server_events, "Response: $(HTTPA.sprintcompact(response))")
             write(lb.io, response)
         elseif (m = match(r"^/delay([0-9]*)$", req.target)) !== nothing
             t = parse(Int, first(m.captures))
             sleep(t/10)
-            push!(server_events, "Response: $(HTTP.sprintcompact(response))")
+            push!(server_events, "Response: $(HTTPA.sprintcompact(response))")
             write(lb.io, response)
         else
-            response = HTTP.Response(403,
+            response = HTTPA.Response(403,
                                      ["Connection" => "close",
                                       "Content-Length" => 0]; request=req)
-            push!(server_events, "Response: $(HTTP.sprintcompact(response))")
+            push!(server_events, "Response: $(HTTPA.sprintcompact(response))")
             write(lb.io, response)
         end
     end
@@ -146,9 +146,9 @@ function Base.unsafe_write(lb::Loopback, p::Ptr{UInt8}, n::UInt)
     return n
 end
 
-HTTP.IOExtras.tcpsocket(::Loopback) = Sockets.TCPSocket()
+HTTPA.IOExtras.tcpsocket(::Loopback) = Sockets.TCPSocket()
 
-function HTTP.ConnectionPool.getconnection(::Type{Loopback},
+function HTTPA.ConnectionPool.getconnection(::Type{Loopback},
                                            host::AbstractString,
                                            port::AbstractString;
                                            kw...)::Loopback
@@ -162,10 +162,10 @@ config = [
 ]
 
 lbreq(req, headers, body; method="GET", kw...) =
-      HTTP.request(method, "http://test/$req", headers, body; config..., kw...)
+      HTTPA.request(method, "http://test/$req", headers, body; config..., kw...)
 
 lbopen(f, req, headers) =
-    HTTP.open(f, "PUT", "http://test/$req", headers; config...)
+    HTTPA.open(f, "PUT", "http://test/$req", headers; config...)
 
 @testset "loopback" begin
 
@@ -183,17 +183,17 @@ lbopen(f, req, headers) =
     r = lbreq("echo", [], ["Hello", " ", "World!"]);
     @test String(r.body) == "Hello World!"
 
-    r = lbreq("echo", [], [HTTP.bytes("Hello"),
-                         HTTP.bytes(" "),
-                         HTTP.bytes("World!")]);
+    r = lbreq("echo", [], [HTTPA.bytes("Hello"),
+                         HTTPA.bytes(" "),
+                         HTTPA.bytes("World!")]);
     @test String(r.body) == "Hello World!"
 
-    r = lbreq("delay10", [], [HTTP.bytes("Hello"),
-                              HTTP.bytes(" "),
-                              HTTP.bytes("World!")]);
+    r = lbreq("delay10", [], [HTTPA.bytes("Hello"),
+                              HTTPA.bytes(" "),
+                              HTTPA.bytes("World!")]);
     @test String(r.body) == "Hello World!"
 
-    HTTP.ConnectionPool.showpool(stdout)
+    HTTPA.ConnectionPool.showpool(stdout)
 
     body = nothing
     body_sent = false
@@ -219,7 +219,7 @@ lbopen(f, req, headers) =
     body = nothing
     body_aborted = false
     body_sent = false
-    @test_throws HTTP.StatusError begin
+    @test_throws HTTPA.StatusError begin
         r = lbopen("abort", []) do http
             @sync begin
                 @async try
@@ -251,7 +251,7 @@ lbopen(f, req, headers) =
 
     hello_sent = false
     world_sent = false
-    @test_throws HTTP.StatusError begin
+    @test_throws HTTPA.StatusError begin
         r = lbreq("abort", [], [
             FunctionIO(()->(hello_sent = true; sleep(0.1); "Hello")),
             FunctionIO(()->(world_sent = true; " World!"))])
@@ -259,7 +259,7 @@ lbopen(f, req, headers) =
     @test hello_sent
     @test !world_sent
 
-    HTTP.ConnectionPool.showpool(stdout)
+    HTTPA.ConnectionPool.showpool(stdout)
 
     function async_test(m=["GET","GET","GET","GET","GET"];kw...)
         r1 = nothing
@@ -300,32 +300,32 @@ lbopen(f, req, headers) =
     @show t
 #    @test 2.1 < t < 2.3
     @test server_events == [
-        "Request: GET /delay1 HTTP/1.1",
-        "Response: HTTP/1.1 200 OK <= (GET /delay1 HTTP/1.1)",
-        "Request: GET /delay2 HTTP/1.1",
-        "Response: HTTP/1.1 200 OK <= (GET /delay2 HTTP/1.1)",
-        "Request: GET /delay3 HTTP/1.1",
-        "Response: HTTP/1.1 200 OK <= (GET /delay3 HTTP/1.1)",
-        "Request: GET /delay4 HTTP/1.1",
-        "Response: HTTP/1.1 200 OK <= (GET /delay4 HTTP/1.1)",
-        "Request: GET /delay5 HTTP/1.1",
-        "Response: HTTP/1.1 200 OK <= (GET /delay5 HTTP/1.1)"]
+        "Request: GET /delay1 HTTPA/1.1",
+        "Response: HTTPA/1.1 200 OK <= (GET /delay1 HTTPA/1.1)",
+        "Request: GET /delay2 HTTPA/1.1",
+        "Response: HTTPA/1.1 200 OK <= (GET /delay2 HTTPA/1.1)",
+        "Request: GET /delay3 HTTPA/1.1",
+        "Response: HTTPA/1.1 200 OK <= (GET /delay3 HTTPA/1.1)",
+        "Request: GET /delay4 HTTPA/1.1",
+        "Response: HTTPA/1.1 200 OK <= (GET /delay4 HTTPA/1.1)",
+        "Request: GET /delay5 HTTPA/1.1",
+        "Response: HTTPA/1.1 200 OK <= (GET /delay5 HTTPA/1.1)"]
 
     server_events = []
     t = async_test(;pipeline_limit=1)
     @show t
 #    @test 0.9 < t < 1.1
     @test server_events == [
-        "Request: GET /delay1 HTTP/1.1",
-        "Request: GET /delay2 HTTP/1.1",
-        "Response: HTTP/1.1 200 OK <= (GET /delay1 HTTP/1.1)",
-        "Request: GET /delay3 HTTP/1.1",
-        "Response: HTTP/1.1 200 OK <= (GET /delay2 HTTP/1.1)",
-        "Request: GET /delay4 HTTP/1.1",
-        "Response: HTTP/1.1 200 OK <= (GET /delay3 HTTP/1.1)",
-        "Request: GET /delay5 HTTP/1.1",
-        "Response: HTTP/1.1 200 OK <= (GET /delay4 HTTP/1.1)",
-        "Response: HTTP/1.1 200 OK <= (GET /delay5 HTTP/1.1)"]
+        "Request: GET /delay1 HTTPA/1.1",
+        "Request: GET /delay2 HTTPA/1.1",
+        "Response: HTTPA/1.1 200 OK <= (GET /delay1 HTTPA/1.1)",
+        "Request: GET /delay3 HTTPA/1.1",
+        "Response: HTTPA/1.1 200 OK <= (GET /delay2 HTTPA/1.1)",
+        "Request: GET /delay4 HTTPA/1.1",
+        "Response: HTTPA/1.1 200 OK <= (GET /delay3 HTTPA/1.1)",
+        "Request: GET /delay5 HTTPA/1.1",
+        "Response: HTTPA/1.1 200 OK <= (GET /delay4 HTTPA/1.1)",
+        "Response: HTTPA/1.1 200 OK <= (GET /delay5 HTTPA/1.1)"]
 
     server_events = []
     t = async_test(;pipeline_limit=2)
@@ -333,16 +333,16 @@ lbopen(f, req, headers) =
 #    @test 0.6 < t < 1
     if haskey(ENV, "HTTP_JL_TEST_TIMING_SENSITIVE")
     @test server_events == [
-        "Request: GET /delay1 HTTP/1.1",
-        "Request: GET /delay2 HTTP/1.1",
-        "Request: GET /delay3 HTTP/1.1",
-        "Response: HTTP/1.1 200 OK <= (GET /delay1 HTTP/1.1)",
-        "Request: GET /delay4 HTTP/1.1",
-        "Response: HTTP/1.1 200 OK <= (GET /delay2 HTTP/1.1)",
-        "Request: GET /delay5 HTTP/1.1",
-        "Response: HTTP/1.1 200 OK <= (GET /delay3 HTTP/1.1)",
-        "Response: HTTP/1.1 200 OK <= (GET /delay4 HTTP/1.1)",
-        "Response: HTTP/1.1 200 OK <= (GET /delay5 HTTP/1.1)"]
+        "Request: GET /delay1 HTTPA/1.1",
+        "Request: GET /delay2 HTTPA/1.1",
+        "Request: GET /delay3 HTTPA/1.1",
+        "Response: HTTPA/1.1 200 OK <= (GET /delay1 HTTPA/1.1)",
+        "Request: GET /delay4 HTTPA/1.1",
+        "Response: HTTPA/1.1 200 OK <= (GET /delay2 HTTPA/1.1)",
+        "Request: GET /delay5 HTTPA/1.1",
+        "Response: HTTPA/1.1 200 OK <= (GET /delay3 HTTPA/1.1)",
+        "Response: HTTPA/1.1 200 OK <= (GET /delay4 HTTPA/1.1)",
+        "Response: HTTPA/1.1 200 OK <= (GET /delay5 HTTPA/1.1)"]
     end
 
     server_events = []
@@ -351,16 +351,16 @@ lbopen(f, req, headers) =
 #    @test 0.5 < t < 0.8
     if haskey(ENV, "HTTP_JL_TEST_TIMING_SENSITIVE")
     @test server_events == [
-        "Request: GET /delay1 HTTP/1.1",
-        "Request: GET /delay2 HTTP/1.1",
-        "Request: GET /delay3 HTTP/1.1",
-        "Request: GET /delay4 HTTP/1.1",
-        "Response: HTTP/1.1 200 OK <= (GET /delay1 HTTP/1.1)",
-        "Request: GET /delay5 HTTP/1.1",
-        "Response: HTTP/1.1 200 OK <= (GET /delay2 HTTP/1.1)",
-        "Response: HTTP/1.1 200 OK <= (GET /delay3 HTTP/1.1)",
-        "Response: HTTP/1.1 200 OK <= (GET /delay4 HTTP/1.1)",
-        "Response: HTTP/1.1 200 OK <= (GET /delay5 HTTP/1.1)"]
+        "Request: GET /delay1 HTTPA/1.1",
+        "Request: GET /delay2 HTTPA/1.1",
+        "Request: GET /delay3 HTTPA/1.1",
+        "Request: GET /delay4 HTTPA/1.1",
+        "Response: HTTPA/1.1 200 OK <= (GET /delay1 HTTPA/1.1)",
+        "Request: GET /delay5 HTTPA/1.1",
+        "Response: HTTPA/1.1 200 OK <= (GET /delay2 HTTPA/1.1)",
+        "Response: HTTPA/1.1 200 OK <= (GET /delay3 HTTPA/1.1)",
+        "Response: HTTPA/1.1 200 OK <= (GET /delay4 HTTPA/1.1)",
+        "Response: HTTPA/1.1 200 OK <= (GET /delay5 HTTPA/1.1)"]
     end
 
     server_events = []
@@ -369,16 +369,16 @@ lbopen(f, req, headers) =
 #    @test 0.5 < t < 0.8
     if haskey(ENV, "HTTP_JL_TEST_TIMING_SENSITIVE")
     @test server_events == [
-        "Request: GET /delay1 HTTP/1.1",
-        "Request: GET /delay2 HTTP/1.1",
-        "Request: GET /delay3 HTTP/1.1",
-        "Request: GET /delay4 HTTP/1.1",
-        "Request: GET /delay5 HTTP/1.1",
-        "Response: HTTP/1.1 200 OK <= (GET /delay1 HTTP/1.1)",
-        "Response: HTTP/1.1 200 OK <= (GET /delay2 HTTP/1.1)",
-        "Response: HTTP/1.1 200 OK <= (GET /delay3 HTTP/1.1)",
-        "Response: HTTP/1.1 200 OK <= (GET /delay4 HTTP/1.1)",
-        "Response: HTTP/1.1 200 OK <= (GET /delay5 HTTP/1.1)"]
+        "Request: GET /delay1 HTTPA/1.1",
+        "Request: GET /delay2 HTTPA/1.1",
+        "Request: GET /delay3 HTTPA/1.1",
+        "Request: GET /delay4 HTTPA/1.1",
+        "Request: GET /delay5 HTTPA/1.1",
+        "Response: HTTPA/1.1 200 OK <= (GET /delay1 HTTPA/1.1)",
+        "Response: HTTPA/1.1 200 OK <= (GET /delay2 HTTPA/1.1)",
+        "Response: HTTPA/1.1 200 OK <= (GET /delay3 HTTPA/1.1)",
+        "Response: HTTPA/1.1 200 OK <= (GET /delay4 HTTPA/1.1)",
+        "Response: HTTPA/1.1 200 OK <= (GET /delay5 HTTPA/1.1)"]
     end
 
     # "A user agent SHOULD NOT pipeline requests after a
@@ -389,25 +389,25 @@ lbopen(f, req, headers) =
     server_events = []
     t = async_test(["POST","GET","GET","GET","GET"])
     @test server_events[1:2] == [
-        "Request: POST /delay1 HTTP/1.1",
-        "Response: HTTP/1.1 200 OK <= (POST /delay1 HTTP/1.1)"]
+        "Request: POST /delay1 HTTPA/1.1",
+        "Response: HTTPA/1.1 200 OK <= (POST /delay1 HTTPA/1.1)"]
 
     server_events = []
     t = async_test(["GET","GET","POST", "GET","GET"])
     @test server_events[1:6] == [
-        "Request: GET /delay1 HTTP/1.1",
-        "Request: GET /delay2 HTTP/1.1",
-        "Request: POST /delay3 HTTP/1.1",
-        "Response: HTTP/1.1 200 OK <= (GET /delay1 HTTP/1.1)",
-        "Response: HTTP/1.1 200 OK <= (GET /delay2 HTTP/1.1)",
-        "Response: HTTP/1.1 200 OK <= (POST /delay3 HTTP/1.1)"] ||
+        "Request: GET /delay1 HTTPA/1.1",
+        "Request: GET /delay2 HTTPA/1.1",
+        "Request: POST /delay3 HTTPA/1.1",
+        "Response: HTTPA/1.1 200 OK <= (GET /delay1 HTTPA/1.1)",
+        "Response: HTTPA/1.1 200 OK <= (GET /delay2 HTTPA/1.1)",
+        "Response: HTTPA/1.1 200 OK <= (POST /delay3 HTTPA/1.1)"] ||
     server_events[1:6] == [
-        "Request: GET /delay1 HTTP/1.1",
-        "Request: GET /delay2 HTTP/1.1",
-        "Response: HTTP/1.1 200 OK <= (GET /delay1 HTTP/1.1)",
-        "Request: POST /delay3 HTTP/1.1",
-        "Response: HTTP/1.1 200 OK <= (GET /delay2 HTTP/1.1)",
-        "Response: HTTP/1.1 200 OK <= (POST /delay3 HTTP/1.1)"]
+        "Request: GET /delay1 HTTPA/1.1",
+        "Request: GET /delay2 HTTPA/1.1",
+        "Response: HTTPA/1.1 200 OK <= (GET /delay1 HTTPA/1.1)",
+        "Request: POST /delay3 HTTPA/1.1",
+        "Response: HTTPA/1.1 200 OK <= (GET /delay2 HTTPA/1.1)",
+        "Response: HTTPA/1.1 200 OK <= (POST /delay3 HTTPA/1.1)"]
 
-    HTTP.ConnectionPool.closeall()
+    HTTPA.ConnectionPool.closeall()
 end

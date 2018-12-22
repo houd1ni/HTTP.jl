@@ -1,4 +1,4 @@
-module HTTP
+module HTTPA
 
 export startwrite, startread, closewrite, closeread
 
@@ -26,13 +26,13 @@ include("Streams.jl")                  ;using .Streams
 
 """
 
-    HTTP.request(method, url [, headers [, body]]; <keyword arguments>]) -> HTTP.Response
+    HTTPA.request(method, url [, headers [, body]]; <keyword arguments>]) -> HTTPA.Response
 
-Send a HTTP Request Message and recieve a HTTP Response Message.
+Send a HTTPA Request Message and recieve a HTTPA Response Message.
 
 e.g.
 ```julia
-r = HTTP.request("GET", "http://httpbin.org/ip")
+r = HTTPA.request("GET", "http://httpbin.org/ip")
 println(r.status)
 println(String(r.body))
 ```
@@ -49,7 +49,7 @@ e.g. a `Dict()`, a `Vector{Tuple}`, a `Vector{Pair}` or an iterator.
  - a readable `IO` stream or any `IO`-like type `T` for which
    `eof(T)` and `readavailable(T)` are defined.
 
-The `HTTP.Response` struct contains:
+The `HTTPA.Response` struct contains:
 
  - `status::Int16` e.g. `200`
  - `headers::Vector{Pair{String,String}}`
@@ -57,24 +57,24 @@ The `HTTP.Response` struct contains:
  - `body::Vector{UInt8}`, the Response Body bytes
     (empty if a `response_stream` was specified in the `request`).
 
-Functions `HTTP.get`, `HTTP.put`, `HTTP.post` and `HTTP.head` are defined as
-shorthand for `HTTP.request("GET", ...)`, etc.
+Functions `HTTPA.get`, `HTTPA.put`, `HTTPA.post` and `HTTPA.head` are defined as
+shorthand for `HTTPA.request("GET", ...)`, etc.
 
-`HTTP.request` and `HTTP.open` also accept optional keyword parameters.
+`HTTPA.request` and `HTTPA.open` also accept optional keyword parameters.
 
 e.g.
 ```julia
-HTTP.request("GET", "http://httpbin.org/ip"; retries=4, cookies=true)
+HTTPA.request("GET", "http://httpbin.org/ip"; retries=4, cookies=true)
 
-HTTP.get("http://s3.us-east-1.amazonaws.com/"; aws_authorization=true)
+HTTPA.get("http://s3.us-east-1.amazonaws.com/"; aws_authorization=true)
 
 conf = (readtimeout = 10,
         pipeline_limit = 4,
         retry = false,
         redirect = false)
 
-HTTP.get("http://httpbin.org/ip"; conf..)
-HTTP.put("http://httpbin.org/put", [], "Hello"; conf..)
+HTTPA.get("http://httpbin.org/ip"; conf..)
+HTTPA.put("http://httpbin.org/put", [], "Hello"; conf..)
 ```
 
 
@@ -120,7 +120,7 @@ Redirect options
 
 Status Exception options
 
- - `status_exception = true`, throw `HTTP.StatusError` for response status >= 300.
+ - `status_exception = true`, throw `HTTPA.StatusError` for response status >= 300.
 
 
 SSLContext options
@@ -166,30 +166,30 @@ Cananoincalization options
 
 String body:
 ```julia
-HTTP.request("POST", "http://httpbin.org/post", [], "post body data")
+HTTPA.request("POST", "http://httpbin.org/post", [], "post body data")
 ```
 
 Stream body from file:
 ```julia
 io = open("post_data.txt", "r")
-HTTP.request("POST", "http://httpbin.org/post", [], io)
+HTTPA.request("POST", "http://httpbin.org/post", [], io)
 ```
 
 Generator body:
 ```julia
 chunks = ("chunk\$i" for i in 1:1000)
-HTTP.request("POST", "http://httpbin.org/post", [], chunks)
+HTTPA.request("POST", "http://httpbin.org/post", [], chunks)
 ```
 
 Collection body:
 ```julia
 chunks = [preamble_chunk, data_chunk, checksum(data_chunk)]
-HTTP.request("POST", "http://httpbin.org/post", [], chunks)
+HTTPA.request("POST", "http://httpbin.org/post", [], chunks)
 ```
 
 `open() do io` body:
 ```julia
-HTTP.open("POST", "http://httpbin.org/post") do io
+HTTPA.open("POST", "http://httpbin.org/post") do io
     write(io, preamble_chunk)
     write(io, data_chunk)
     write(io, checksum(data_chunk))
@@ -201,14 +201,14 @@ end
 
 String body:
 ```julia
-r = HTTP.request("GET", "http://httpbin.org/get")
+r = HTTPA.request("GET", "http://httpbin.org/get")
 println(String(r.body))
 ```
 
 Stream body to file:
 ```julia
 io = open("get_data.txt", "w")
-r = HTTP.request("GET", "http://httpbin.org/get", response_stream=io)
+r = HTTPA.request("GET", "http://httpbin.org/get", response_stream=io)
 close(io)
 println(read("get_data.txt"))
 ```
@@ -220,21 +220,21 @@ io = Base.BufferStream()
     bytes = readavailable(io))
     println("GET data: \$bytes")
 end
-r = HTTP.request("GET", "http://httpbin.org/get", response_stream=io)
+r = HTTPA.request("GET", "http://httpbin.org/get", response_stream=io)
 close(io)
 ```
 
 Stream body through `open() do io`:
 ```julia
-r = HTTP.open("GET", "http://httpbin.org/stream/10") do io
+r = HTTPA.open("GET", "http://httpbin.org/stream/10") do io
    while !eof(io)
        println(String(readavailable(io)))
    end
 end
 
-using HTTP.IOExtras
+using HTTPA.IOExtras
 
-HTTP.open("GET", "https://tinyurl.com/bach-cello-suite-1-ogg") do http
+HTTPA.open("GET", "https://tinyurl.com/bach-cello-suite-1-ogg") do http
     n = 0
     r = startread(http)
     l = parse(Int, header(r, "Content-Length"))
@@ -254,7 +254,7 @@ end
 
 String bodies:
 ```julia
-r = HTTP.request("POST", "http://httpbin.org/post", [], "post body data")
+r = HTTPA.request("POST", "http://httpbin.org/post", [], "post body data")
 println(String(r.body))
 ```
 
@@ -265,7 +265,7 @@ params = Dict("user"=>"RAO...tjN", "token"=>"NzU...Wnp", "message"=>"Hello!")
 base_url = "http://api.domain.com"
 endpoint = "/1/messages.json"
 url = base_url * endpoint
-r = HTTP.request("POST", url,
+r = HTTPA.request("POST", url,
              ["Content-Type" => "application/json"],
              JSON.json(params))
 println(JSON.parse(String(r.body)))
@@ -275,14 +275,14 @@ Stream bodies from and to files:
 ```julia
 in = open("foo.png", "r")
 out = open("foo.jpg", "w")
-HTTP.request("POST", "http://convert.com/png2jpg", [], in, response_stream=out)
+HTTPA.request("POST", "http://convert.com/png2jpg", [], in, response_stream=out)
 ```
 
 Stream bodies through: `open() do io`:
 ```julia
-using HTTP.IOExtras
+using HTTPA.IOExtras
 
-HTTP.open("POST", "http://music.com/play") do io
+HTTPA.open("POST", "http://music.com/play") do io
     write(io, JSON.json([
         "auth" => "12345XXXX",
         "song_id" => 7,
@@ -297,7 +297,7 @@ end
 ```
 """
 request(method::String, url::URI, headers::Headers, body; kw...)::Response =
-    request(HTTP.stack(;kw...), method, url, headers, body; kw...)
+    request(HTTPA.stack(;kw...), method, url, headers, body; kw...)
 #FIXME consider @nospecialize for `body` ? (other places? in ConnectionPool?)
 
 
@@ -314,21 +314,21 @@ function request(method, url, h=Header[], b=nobody;
 end
 
 """
-    HTTP.open(method, url, [,headers]) do io
+    HTTPA.open(method, url, [,headers]) do io
         write(io, body)
-        [startread(io) -> HTTP.Response]
+        [startread(io) -> HTTPA.Response]
         while !eof(io)
             readavailable(io) -> AbstractVector{UInt8}
         end
-    end -> HTTP.Response
+    end -> HTTPA.Response
 
-The `HTTP.open` API allows the Request Body to be written to (and/or the
+The `HTTPA.open` API allows the Request Body to be written to (and/or the
 Response Body to be read from) an `IO` stream.
 
 
 e.g. Streaming an audio file to the `vlc` player:
 ```julia
-HTTP.open("GET", "https://tinyurl.com/bach-cello-suite-1-ogg") do http
+HTTPA.open("GET", "https://tinyurl.com/bach-cello-suite-1-ogg") do http
     open(`vlc -q --play-and-exit --intf dummy -`, "w") do vlc
         write(vlc, http)
     end
@@ -339,9 +339,9 @@ open(f::Function, method::String, url, headers=Header[]; kw...)::Response =
     request(method, url, headers, nothing; iofunction=f, kw...)
 
 """
-    HTTP.openraw(method, url, [, headers])::Tuple{TCPSocket, Response, ByteView}
+    HTTPA.openraw(method, url, [, headers])::Tuple{TCPSocket, Response, ByteView}
 
-Open a raw socket that is unmanaged by HTTP.jl. Useful for doing HTTP upgrades
+Open a raw socket that is unmanaged by HTTPA.jl. Useful for doing HTTPA upgrades
 to other protocols.  Any bytes of the body read from the socket when reading
 headers, is returned as excess bytes in the last tuple argument.
 
@@ -353,7 +353,7 @@ headers = Dict(
     "Sec-WebSocket-Key" => "dGhlIHNhbXBsZSBub25jZQ==",
     "Sec-WebSocket-Version" => "13")
 
-socket, response, excess = HTTP.openraw("GET", "ws://echo.websocket.org", headers)
+socket, response, excess = HTTPA.openraw("GET", "ws://echo.websocket.org", headers)
 
 # Write a WebSocket frame
 frame = UInt8[0x81, 0x85, 0x37, 0xfa, 0x21, 0x3d, 0x7f, 0x9f, 0x4d, 0x51, 0x58]
@@ -362,8 +362,8 @@ write(socket, frame)
 """
 function openraw(method::String, url, headers=Header[]; kw...)::Tuple{IO, Response}
     socketready = Channel{Tuple{IO, Response}}(0)
-    @async HTTP.open(method, url, headers; kw...) do http
-        HTTP.startread(http)
+    @async HTTPA.open(method, url, headers; kw...) do http
+        HTTPA.startread(http)
         socket = http.stream
         put!(socketready, (socket, http.message))
         while(isopen(socket))
@@ -374,44 +374,44 @@ function openraw(method::String, url, headers=Header[]; kw...)::Tuple{IO, Respon
 end
 
 """
-    HTTP.get(url [, headers]; <keyword arguments>) -> HTTP.Response
+    HTTPA.get(url [, headers]; <keyword arguments>) -> HTTPA.Response
 
-Shorthand for `HTTP.request("GET", ...)`. See [`HTTP.request`](@ref).
+Shorthand for `HTTPA.request("GET", ...)`. See [`HTTPA.request`](@ref).
 """
 get(a...; kw...) = request("GET", a...; kw...)
 
 """
-    HTTP.put(url, headers, body; <keyword arguments>) -> HTTP.Response
+    HTTPA.put(url, headers, body; <keyword arguments>) -> HTTPA.Response
 
-Shorthand for `HTTP.request("PUT", ...)`. See [`HTTP.request`](@ref).
+Shorthand for `HTTPA.request("PUT", ...)`. See [`HTTPA.request`](@ref).
 """
 put(u, h=[], b=""; kw...) = request("PUT", u, h, b; kw...)
 
 """
-    HTTP.post(url, headers, body; <keyword arguments>) -> HTTP.Response
+    HTTPA.post(url, headers, body; <keyword arguments>) -> HTTPA.Response
 
-Shorthand for `HTTP.request("POST", ...)`. See [`HTTP.request`](@ref).
+Shorthand for `HTTPA.request("POST", ...)`. See [`HTTPA.request`](@ref).
 """
 post(u, h=[], b=""; kw...) = request("POST", u, h, b; kw...)
 
 """
-    HTTP.patch(url, headers, body; <keyword arguments>) -> HTTP.Response
+    HTTPA.patch(url, headers, body; <keyword arguments>) -> HTTPA.Response
 
-Shorthand for `HTTP.request("PATCH", ...)`. See [`HTTP.request`](@ref).
+Shorthand for `HTTPA.request("PATCH", ...)`. See [`HTTPA.request`](@ref).
 """
 patch(u, h=[], b=""; kw...) = request("PATCH", u, h, b; kw...)
 
 """
-    HTTP.head(url; <keyword arguments>) -> HTTP.Response
+    HTTPA.head(url; <keyword arguments>) -> HTTPA.Response
 
-Shorthand for `HTTP.request("HEAD", ...)`. See [`HTTP.request`](@ref).
+Shorthand for `HTTPA.request("HEAD", ...)`. See [`HTTPA.request`](@ref).
 """
 head(u; kw...) = request("HEAD", u; kw...)
 
 """
-    HTTP.delete(url [, headers]; <keyword arguments>) -> HTTP.Response
+    HTTPA.delete(url [, headers]; <keyword arguments>) -> HTTPA.Response
 
-Shorthand for `HTTP.request("DELETE", ...)`. See [`HTTP.request`](@ref).
+Shorthand for `HTTPA.request("DELETE", ...)`. See [`HTTPA.request`](@ref).
 """
 delete(a...; kw...) = request("DELETE", a...; kw...)
 
@@ -486,8 +486,8 @@ include("StreamRequest.jl");            using .StreamRequest
 include("ContentTypeRequest.jl");       using .ContentTypeDetection
 
 """
-The `stack()` function returns the default HTTP Layer-stack type.
-This type is passed as the first parameter to the [`HTTP.request`](@ref) function.
+The `stack()` function returns the default HTTPA Layer-stack type.
+This type is passed as the first parameter to the [`HTTPA.request`](@ref) function.
 
 `stack()` accepts optional keyword arguments to enable/disable specific layers
 in the stack:
@@ -501,22 +501,22 @@ stack = MessageLayer{ConnectionPoolLayer{StreamLayer}}
 ```
 
 The figure below illustrates the full request exection stack and its
-relationship with [`HTTP.Response`](@ref), [`HTTP.Parsers`](@ref),
-[`HTTP.Stream`](@ref) and the [`HTTP.ConnectionPool`](@ref).
+relationship with [`HTTPA.Response`](@ref), [`HTTPA.Parsers`](@ref),
+[`HTTPA.Stream`](@ref) and the [`HTTPA.ConnectionPool`](@ref).
 
 ```
  ┌────────────────────────────────────────────────────────────────────────────┐
  │                                            ┌───────────────────┐           │
- │  HTTP.jl Request Execution Stack           │ HTTP.ParsingError ├ ─ ─ ─ ─ ┐ │
+ │  HTTPA.jl Request Execution Stack           │ HTTPA.ParsingError ├ ─ ─ ─ ─ ┐ │
  │                                            └───────────────────┘           │
  │                                            ┌───────────────────┐         │ │
- │                                            │ HTTP.IOError      ├ ─ ─ ─     │
+ │                                            │ HTTPA.IOError      ├ ─ ─ ─     │
  │                                            └───────────────────┘      │  │ │
  │                                            ┌───────────────────┐           │
- │                                            │ HTTP.StatusError  │─ ─   │  │ │
+ │                                            │ HTTPA.StatusError  │─ ─   │  │ │
  │                                            └───────────────────┘   │       │
  │                                            ┌───────────────────┐      │  │ │
- │     request(method, url, headers, body) -> │ HTTP.Response     │   │       │
+ │     request(method, url, headers, body) -> │ HTTPA.Response     │   │       │
  │             ──────────────────────────     └─────────▲─────────┘      │  │ │
  │                           ║                          ║             │       │
  │   ┌────────────────────────────────────────────────────────────┐      │  │ │
@@ -547,7 +547,7 @@ relationship with [`HTTP.Response`](@ref), [`HTTP.Parsers`](@ref),
 │└──────────────────┼────────║──────────┼───────────────║─────────────────────┘
 │                   │        ║          │               ║                   │  
 │┌──────────────────▼───────────────┐   │  ┌──────────────────────────────────┐
-││ HTTP.Request                     │   │  │ HTTP.Response                  │ │
+││ HTTPA.Request                     │   │  │ HTTPA.Response                  │ │
 ││                                  │   │  │                                  │
 ││ method::String                   ◀───┼──▶ status::Int                    │ │
 ││ target::String                   │   │  │ headers::Vector{Pair}            │
@@ -555,7 +555,7 @@ relationship with [`HTTP.Response`](@ref), [`HTTP.Parsers`](@ref),
 ││ body::Vector{UInt8}              │   │  │                                  │
 │└──────────────────▲───────────────┘   │  └───────────────▲────────────────┼─┘
 │┌──────────────────┴────────║──────────▼───────────────║──┴──────────────────┐
-││ HTTP.Stream <:IO          ║           ╔══════╗       ║                   │ │
+││ HTTPA.Stream <:IO          ║           ╔══════╗       ║                   │ │
 ││   ┌───────────────────────────┐       ║   ┌──▼─────────────────────────┐   │
 ││   │ startwrite(::Stream)      │       ║   │ startread(::Stream)        │ │ │
 ││   │ write(::Stream, body)     │       ║   │ read(::Stream) -> body     │   │
@@ -564,21 +564,21 @@ relationship with [`HTTP.Response`](@ref), [`HTTP.Parsers`](@ref),
 ││   └───────────────────────────┘       ║   └────────────────────────────┘ │ │
 │└───────────────────────────║────────┬──║──────║───────║──┬──────────────────┘
 │┌──────────────────────────────────┐ │  ║ ┌────▼───────║──▼────────────────┴─┐
-││ HTTP.Messages                    │ │  ║ │ HTTP.Parsers                     │
+││ HTTPA.Messages                    │ │  ║ │ HTTPA.Parsers                     │
 ││                                  │ │  ║ │                                  │
 ││ writestartline(::IO, ::Request)  │ │  ║ │ parse_status_line(bytes, ::Req') │
 ││ writeheaders(::IO, ::Request)    │ │  ║ │ parse_header_field(bytes, ::Req')│
 │└──────────────────────────────────┘ │  ║ └──────────────────────────────────┘
 │                            ║        │  ║                                     
 │┌───────────────────────────║────────┼──║────────────────────────────────────┐
-└▶ HTTP.ConnectionPool       ║        │  ║                                    │
+└▶ HTTPA.ConnectionPool       ║        │  ║                                    │
  │                     ┌──────────────▼────────┐ ┌───────────────────────┐    │
- │ getconnection() ->  │ HTTP.Transaction <:IO │ │ HTTP.Transaction <:IO │    │
+ │ getconnection() ->  │ HTTPA.Transaction <:IO │ │ HTTPA.Transaction <:IO │    │
  │                     └───────────────────────┘ └───────────────────────┘    │
  │                           ║    ╲│╱    ║                  ╲│╱               │
  │                           ║     │     ║                   │                │
  │                     ┌───────────▼───────────┐ ┌───────────▼───────────┐    │
- │              pool: [│ HTTP.Connection       │,│ HTTP.Connection       │...]│
+ │              pool: [│ HTTPA.Connection       │,│ HTTPA.Connection       │...]│
  │                     └───────────┬───────────┘ └───────────┬───────────┘    │
  │                           ║     │     ║                   │                │
  │                     ┌───────────▼───────────┐ ┌───────────▼───────────┐    │
@@ -591,7 +591,7 @@ relationship with [`HTTP.Response`](@ref), [`HTTP.Parsers`](@ref),
  └───────────────────────────║───────────║────────────────────────────────────┘
                              ║           ║                                     
  ┌───────────────────────────║───────────║──────────────┐  ┏━━━━━━━━━━━━━━━━━━┓
- │ HTTP Server               ▼                          │  ┃ data flow: ════▶ ┃
+ │ HTTPA Server               ▼                          │  ┃ data flow: ════▶ ┃
  │                        Request     Response          │  ┃ reference: ────▶ ┃
  └──────────────────────────────────────────────────────┘  ┗━━━━━━━━━━━━━━━━━━┛
 ```

@@ -5,7 +5,7 @@ using ..Messages
 using ..Strings: tocameldash
 
 """
-    request(CanonicalizeLayer, method, ::URI, headers, body) -> HTTP.Response
+    request(CanonicalizeLayer, method, ::URI, headers, body) -> HTTPA.Response
 
 Rewrite request and response headers in Canonical-Camel-Dash-Format.
 """

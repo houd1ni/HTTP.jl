@@ -2,9 +2,9 @@ using Distributed
 addprocs(5)
 
 using Test
-using HTTP
+using HTTPA
 
-@testset "HTTP" begin
+@testset "HTTPA" begin
     for f in ["ascii.jl",
               "issue_288.jl",
               "utils.jl",

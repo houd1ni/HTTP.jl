@@ -27,7 +27,7 @@ end
 struct URLParsingError <: Exception
     msg::String
 end
-Base.show(io::IO, p::URLParsingError) = println(io, "HTTP.URLParsingError: ", p.msg)
+Base.show(io::IO, p::URLParsingError) = println(io, "HTTPA.URLParsingError: ", p.msg)
 
 @enum(http_host_state,
     s_http_host_dead,
@@ -270,7 +270,7 @@ function http_parser_parse_url(url::String)
             userinfo = blank
         end
     end
-    return HTTP.URI(url, scheme, userinfo, host, port, path, query, fragment)
+    return HTTPA.URI(url, scheme, userinfo, host, port, path, query, fragment)
 end
 
 const normal_url_char = Bool[

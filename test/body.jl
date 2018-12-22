@@ -1,6 +1,6 @@
-using HTTP.Messages
+using HTTPA.Messages
 
-@testset "HTTP.Bodies" begin
+@testset "HTTPA.Bodies" begin
 
     @test String(take!(Body("Hello!"))) == "Hello!"
     @test String(take!(Body(IOBuffer("Hello!")))) == "Hello!"
@@ -42,12 +42,12 @@ using HTTP.Messages
     show(buf, b)
     @test String(take!(buf)) == "Hello!\nWorld!\n"
 
-    tmp = HTTP.Messages.Bodies.body_show_max
-    HTTP.Messages.Bodies.set_show_max(12)
+    tmp = HTTPA.Messages.Bodies.body_show_max
+    HTTPA.Messages.Bodies.set_show_max(12)
     b = Body("Hello World!xxx")
     #display(b); println()
     buf = IOBuffer()
     show(buf, b)
     @test String(take!(buf)) == "Hello World!\n⋮\n15-byte body\n"
-    HTTP.Messages.Bodies.set_show_max(tmp)
+    HTTPA.Messages.Bodies.set_show_max(tmp)
 end

@@ -5,7 +5,7 @@ using ..ConnectionPool
 import ..@debug, ..DEBUG_LEVEL
 
 """
-    request(TimeoutLayer, ::IO, ::Request, body) -> HTTP.Response
+    request(TimeoutLayer, ::IO, ::Request, body) -> HTTPA.Response
 
 Close `IO` if no data has been received for `timeout` seconds.
 """

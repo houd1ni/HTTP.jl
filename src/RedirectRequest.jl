@@ -8,7 +8,7 @@ import ..Header
 import ..@debug, ..DEBUG_LEVEL
 
 """
-    request(RedirectLayer, method, ::URI, headers, body) -> HTTP.Response
+    request(RedirectLayer, method, ::URI, headers, body) -> HTTPA.Response
 
 Redirects the request in the case of 3xx response status.
 """

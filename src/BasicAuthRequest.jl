@@ -8,7 +8,7 @@ using ..Pairs: getkv, setkv
 import ..@debug, ..DEBUG_LEVEL
 
 """
-    request(BasicAuthLayer, method, ::URI, headers, body) -> HTTP.Response
+    request(BasicAuthLayer, method, ::URI, headers, body) -> HTTPA.Response
 
 Add `Authorization: Basic` header using credentials from url userinfo.
 """

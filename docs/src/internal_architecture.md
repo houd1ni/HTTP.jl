@@ -1,25 +1,25 @@
 # Internal Architecture
 
 ```@docs
-HTTP.Layer
-HTTP.stack
+HTTPA.Layer
+HTTPA.stack
 ```
 
 
 ## Request Execution Layers
 
 ```@docs
-HTTP.RedirectLayer
-HTTP.BasicAuthLayer
-HTTP.CookieLayer
-HTTP.CanonicalizeLayer
-HTTP.MessageLayer
-HTTP.AWS4AuthLayer
-HTTP.RetryLayer
-HTTP.ExceptionLayer
-HTTP.ConnectionPoolLayer
-HTTP.TimeoutLayer
-HTTP.StreamLayer
+HTTPA.RedirectLayer
+HTTPA.BasicAuthLayer
+HTTPA.CookieLayer
+HTTPA.CanonicalizeLayer
+HTTPA.MessageLayer
+HTTPA.AWS4AuthLayer
+HTTPA.RetryLayer
+HTTPA.ExceptionLayer
+HTTPA.ConnectionPoolLayer
+HTTPA.TimeoutLayer
+HTTPA.StreamLayer
 ```
 
 ## Parser
@@ -27,7 +27,7 @@ HTTP.StreamLayer
 *Source: `Parsers.jl`*
 
 ```@docs
-HTTP.Parsers
+HTTPA.Parsers
 ```
 
 
@@ -35,7 +35,7 @@ HTTP.Parsers
 *Source: `Messages.jl`*
 
 ```@docs
-HTTP.Messages
+HTTPA.Messages
 ```
 
 
@@ -43,7 +43,7 @@ HTTP.Messages
 *Source: `Streams.jl`*
 
 ```@docs
-HTTP.Streams.Stream
+HTTPA.Streams.Stream
 ```
 
 
@@ -52,5 +52,5 @@ HTTP.Streams.Stream
 *Source: `ConnectionPool.jl`*
 
 ```@docs
-HTTP.ConnectionPool
+HTTPA.ConnectionPool
 ```

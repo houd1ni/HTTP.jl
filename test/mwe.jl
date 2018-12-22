@@ -1,5 +1,5 @@
-using HTTP
-using HTTP: hasheader
+using HTTPA
+using HTTPA: hasheader
 using MbedTLS
 
 @static if is_apple()
@@ -15,12 +15,12 @@ end
     launch("https://127.0.0.1:8000/examples/mwe")
 end
 
-HTTP.listen("127.0.0.1", 8000;
+HTTPA.listen("127.0.0.1", 8000;
             sslconfig = MbedTLS.SSLConfig(joinpath(dirname(@__FILE__), "cert.pem"),
                                           joinpath(dirname(@__FILE__), "key.pem"))) do http
-    if HTTP.WebSockets.is_websocket_upgrade(http.message)
+    if HTTPA.WebSockets.is_websocket_upgrade(http.message)
 
-        HTTP.WebSockets.upgrade(http) do client
+        HTTPA.WebSockets.upgrade(http) do client
             count = 1
             while !eof(client);
                 msg = String(readavailable(client))
@@ -30,10 +30,10 @@ HTTP.listen("127.0.0.1", 8000;
             end
         end
     else
-        h = HTTP.Handlers.RequestHandlerFunction() do req::HTTP.Request
-            HTTP.Response(200,read(joinpath(dirname(@__FILE__),"mwe.html"), String))
+        h = HTTPA.Handlers.RequestHandlerFunction() do req::HTTPA.Request
+            HTTPA.Response(200,read(joinpath(dirname(@__FILE__),"mwe.html"), String))
         end
-        HTTP.Handlers.handle(h, http)
+        HTTPA.Handlers.handle(h, http)
     end
 end
 
