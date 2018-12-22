@@ -59,16 +59,15 @@ end
 
 function check_upgrade(http)
 
-  if !hasheader(http, "Upgrade", "websocket")
-      throw(WebSocketError(0, "Expected \"Upgrade: websocket\"!\n" *
-                              "$(http.message)"))
-  end
+    if !hasheader(http, "Upgrade", "websocket")
+        throw(WebSocketError(0, "Expected \"Upgrade: websocket\"!\n" *
+                                "$(http.message)"))
+    end
 
-  if !hasheader(http, "Connection", "upgrade") &&
-     !hasheader(http, "Connection", "keep-alive, Upgrade")
-      throw(WebSocketError(0, "Expected \"Connection: upgrade\"!\n" *
-                              "$(http.message)"))
-  end
+    if !headercontains(http, "Connection", "upgrade")
+        throw(WebSocketError(0, "Expected \"Connection: upgrade\"!\n" *
+                                "$(http.message)"))
+    end
 end
 
 function accept_hash(key)
