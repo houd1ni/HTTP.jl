@@ -118,7 +118,7 @@ function listen(f::Function,
                 host::String="localhost", port::UInt16=UInt16(8081);
                 binary=false, verbose=false)
 
-    HTTP.listen(host, port; verbose=verbose) do http
+    HTTP.listen(host, port; verbose=verbose, readtimeout=36000000) do http
         upgrade(f, http; binary=binary)
     end
 end
@@ -142,10 +142,8 @@ function upgrade(f::Function, http::HTTP.Stream; binary=false)
     io = http.stream
     ws = WebSocket(io; binary=binary, server=true)
     try
-        f(ws)
-    finally
-        close(ws)
-    end
+        f(ws, http)
+    catch end
 end
 
 # Sending Frames
