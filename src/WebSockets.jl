@@ -142,7 +142,7 @@ function upgrade(f::Function, http::HTTP.Stream; binary=false)
     io = http.stream
     ws = WebSocket(io; binary=binary, server=true)
     try
-        f(ws, http)
+        f(ws)
     catch end
 end
 

@@ -245,7 +245,7 @@ struct RequestHandlerFunction{F} <: RequestHandler
     func::F # func(req)
 end
 
-handle(h::RequestHandlerFunction, req::Request) = h.func(req)
+handle(h::RequestHandlerFunction, req::Request, stream::Stream) = h.func(req, stream)
 
 """
 StreamHandlerFunction(f)
@@ -262,14 +262,17 @@ handle(h::StreamHandlerFunction, stream::Stream) = h.func(stream)
 
 "For request handlers, read a full request from a stream, pass to the handler, then write out the response"
 function handle(h::RequestHandler, http::Stream)
-    request::Request = http.message
-    request.body = read(http)
+  request::Request = http.message
+  request.body = read(http)
+  out = handle(h, request, http)
+  if out isa Response
     closeread(http)
-    request.response::Response = handle(h, request)
+    request.response::Response = out
     request.response.request = request
     startwrite(http)
     write(http, request.response.body)
-    return
+  end
+  return
 end
 
 "A default 404 Handler"
